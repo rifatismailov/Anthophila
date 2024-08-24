@@ -35,24 +35,36 @@ func (c *Checker) Checkfile() error {
 			}
 			//Перевіряє, чи підтримується тип файлу
 			if !info.IsDir() && isSupportedFileType(path, c.SupportedExtensions) {
-				changed, err := NewFileInfo().CheckAndWriteHash(path, "hashes.json")
-				if err != nil {
-					fmt.Println("Помилка:", err)
+				changed, errorFileInfo := NewFileInfo().CheckAndWriteHash(path, "hashes.json")
+				if errorFileInfo != nil {
+					fmt.Println("Помилка:", errorFileInfo)
+					return errorFileInfo
 				} else if changed {
 					fmt.Println("Хеш файлу змінився")
 					sender := sendfile.NewFILESender()
-					sender.SenderFile(c.Address, path, c.Key)
+					errSenderFile := sender.SenderFile(c.Address, path, c.Key)
+					if errSenderFile != nil {
+						fmt.Println("Сталося помилка ", errSenderFile)
+						return errSenderFile
+					}
 				} else {
 					fmt.Println("Хеш файлу не змінився")
 				}
 				sender := sendfile.NewFILESender()
-				sender.SenderFile(c.Address, path, c.Key)
+				senderError := sender.SenderFile(c.Address, path, c.Key)
+
+				if senderError != nil {
+					fmt.Println("Сталося помилка ", senderError)
+					return senderError
+				}
+
 			}
 			return nil
 		})
 
 		if err != nil {
 			fmt.Printf("Помилка обходу шляху %s: %v\n", dir, err)
+			return err
 		}
 	}
 	return nil
