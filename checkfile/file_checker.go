@@ -32,6 +32,7 @@
 |                            |
 +----------------------------+
 */
+
 package checkfile
 
 import (
@@ -44,10 +45,13 @@ type FileChecker struct {
 	Key                 []byte
 	Directories         []string
 	SupportedExtensions []string
+	TimeStart           []int8
 }
 
 func (w *FileChecker) Start() {
-
+	hour := w.TimeStart[0]
+	minute := w.TimeStart[1]
+	fmt.Println("Hour:", hour, "Minute:", minute)
 	checker := Checker{w.Address, w.Key, w.Directories, w.SupportedExtensions}
 	go func() {
 		for {
