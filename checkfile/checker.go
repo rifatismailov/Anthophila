@@ -9,9 +9,10 @@ import (
 
 // Checker - структура, що містить дані для перевірки файлів.
 type Checker struct {
-	Address     string
-	Key         []byte
-	Directories []string
+	Address             string
+	Key                 []byte
+	Directories         []string
+	SupportedExtensions []string
 }
 
 // NewChecker - конструктор для створення нового Checker.
@@ -33,7 +34,7 @@ func (c *Checker) Checkfile() error {
 				return nil
 			}
 			//Перевіряє, чи підтримується тип файлу
-			if !info.IsDir() && isSupportedFileType(path) {
+			if !info.IsDir() && isSupportedFileType(path, c.SupportedExtensions) {
 				changed, err := NewFileInfo().CheckAndWriteHash(path, "hashes.json")
 				if err != nil {
 					fmt.Println("Помилка:", err)
@@ -61,8 +62,8 @@ func (c *Checker) Checkfile() error {
 *	Функція isSupportedFileType:
 *	Перевіряє, чи підтримується тип файлу. Повертає true, якщо розширення файлу є одним з підтримуваних
  */
-func isSupportedFileType(file string) bool {
-	supportedExtensions := []string{".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"}
+func isSupportedFileType(file string, supportedExtensions []string) bool {
+	//supportedExtensions := []string{".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"}
 	for _, ext := range supportedExtensions {
 		if filepath.Ext(file) == ext {
 			return true

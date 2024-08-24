@@ -40,14 +40,15 @@ import (
 )
 
 type FileChecker struct {
-	Address     string
-	Key         []byte
-	Directories []string
+	Address             string
+	Key                 []byte
+	Directories         []string
+	SupportedExtensions []string
 }
 
 func (w *FileChecker) Start() {
 
-	checker := Checker{w.Address, w.Key, w.Directories}
+	checker := Checker{w.Address, w.Key, w.Directories, w.SupportedExtensions}
 	go func() {
 		for {
 			time.Sleep(5 * time.Second)
