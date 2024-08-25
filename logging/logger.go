@@ -1,85 +1,69 @@
 package logging
 
 import (
+	"Anthophila/infirmation"
 	"encoding/json"
-	"fmt"
-	"io"
-	"os"
+	"net"
 	"time"
 )
 
-// LogEntry представляє один запис логування
-type LogEntry struct {
-	Timestamp string `json:"timestamp"`
-	Level     string `json:"level"`
-	Message   string `json:"message"`
-}
-
-// Logger представляє логер для запису логів у JSON файл
 type Logger struct {
-	FilePath string
+	Message string `json:"Message"`
+	Error   string `json:"Error"`
 }
 
-// NewLogger створює новий екземпляр Logger
-func NewLogger(filePath string) *Logger {
-	return &Logger{FilePath: filePath}
-}
+// Send відправляє лог у окремому потоці
+func (l *Logger) Send(logServer string) {
 
-// Log записує новий запис у JSON файл
-func (l *Logger) Log(level, message string) error {
-	// Створення нового запису логування
-	entry := LogEntry{
-		Timestamp: time.Now().Format(time.RFC3339),
-		Level:     level,
-		Message:   message,
-	}
+	go func() {
+		// Внутрішня структура для відправки повідомлення
+		type message struct {
+			HostName    string `json:"HostName"`
+			HostAddress string `json:"HostAddress"`
+			RemoteAddr  string `json:"RemoteAddr"`
+			Message     string `json:"Message"`
+			Error       string `json:"Error"`
+		}
 
-	// Отримання існуючих записів
-	var existingEntries []LogEntry
-	if _, err := os.Stat(l.FilePath); !os.IsNotExist(err) {
-		file, err := os.OpenFile(l.FilePath, os.O_RDWR, 0666)
+		// Заповнення внутрішньої структури
+		msg := message{
+			HostName:    infirmation.NewInfo().HostName(),
+			HostAddress: infirmation.NewInfo().HostAddress(),
+			RemoteAddr:  infirmation.NewInfo().RemoteAddress("https://api.ipify.org"),
+			Message:     l.Message,
+			Error:       l.Error,
+		}
+
+		// Серіалізація в JSON
+		jsonData, err := json.Marshal(msg)
 		if err != nil {
-			return err
 		}
-		defer file.Close()
-
-		decoder := json.NewDecoder(file)
-		err = decoder.Decode(&existingEntries)
-		if err != nil && err != io.EOF {
-			return err
-		}
-	}
-
-	// Додавання нового запису
-	existingEntries = append(existingEntries, entry)
-
-	// Запис оновлених записів у файл
-	file, err := os.Create(l.FilePath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	encoder := json.NewEncoder(file)
-	encoder.SetIndent("", "  ") // Форматування JSON для кращої читабельності
-	err = encoder.Encode(existingEntries)
-	if err != nil {
-		return err
-	}
-
-	return nil
+		sendLogger(logServer, string(jsonData))
+	}()
 }
 
-func main() {
-	logger := NewLogger("logs.json")
+func sendLogger(serverAddress, json string) {
+	var conn net.Conn
+	var err error
 
-	err := logger.Log("INFO", "This is an info message.")
-	if err != nil {
-		fmt.Printf("Error logging message: %v\n", err)
+	for {
+		// Спроба підключення до сервера
+		conn, err = net.Dial("tcp", serverAddress)
+		if err != nil {
+			//Помилка підключення до сервера
+			time.Sleep(1 * time.Second) // Затримка перед спробою повторного підключення
+			continue
+		}
+		// Підключення успішне, вихід з циклу перепідключення
+		break
 	}
 
-	err = logger.Log("ERROR", "This is an error message.")
+	// Відправка повідомлення після успішного підключення
+	defer conn.Close() // Закриття з'єднання після відправки
+	_, err = conn.Write([]byte(json))
 	if err != nil {
-		fmt.Printf("Error logging message: %v\n", err)
+		//Помилка при надсиланні повідомлення
+	} else {
+		//Повідомлення надіслано успішно.
 	}
 }

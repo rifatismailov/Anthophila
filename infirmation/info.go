@@ -1,0 +1,52 @@
+package infirmation
+
+import (
+	"io/ioutil"
+	"net"
+	"net/http"
+	"os"
+)
+
+type Info struct {
+}
+
+func NewInfo() *Info {
+	return &Info{}
+}
+func (i Info) HostName() string {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return "Помилка отримання хост-імені"
+	}
+	return hostname
+
+}
+func (i Info) HostAddress() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return "Помилка отримання локальних IP-адрес"
+	}
+
+	for _, addr := range addrs {
+		// Перевіряємо, чи це IP-адреса, а не MAC або інша адреса
+		if ipNet, ok := addr.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
+			if ipNet.IP.To4() != nil {
+				return ipNet.IP.String() // Повертаємо локальну IP-адресу
+			}
+		}
+	}
+	return "IP-адреса не знайдена"
+}
+func (i Info) RemoteAddress(urlSite string) string {
+	resp, err := http.Get(urlSite)
+	if err != nil {
+		return "Помилка отримання зовнішньої IP-адреси"
+	}
+	defer resp.Body.Close()
+	ip, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "Помилка читання відповіді"
+	}
+	// повертаємо Зовнішня IP-адреса:", string(ip)
+	return string(ip)
+}
