@@ -12,11 +12,11 @@ type Logger struct {
 	Error   string `json:"Error"`
 }
 
-// Send відправляє лог у окремому потоці
+// Send відправляє лог в окремому потоці
 func (l *Logger) Send(logServer string) {
 
 	go func() {
-		// Внутрішня структура для відправки повідомлення
+		// Внутрішня структура для відряджання повідомлення
 		type message struct {
 			HostName    string `json:"HostName"`
 			HostAddress string `json:"HostAddress"`
@@ -58,8 +58,8 @@ func sendLogger(serverAddress, json string) {
 		break
 	}
 
-	// Відправка повідомлення після успішного підключення
-	defer conn.Close() // Закриття з'єднання після відправки
+	// Відряджання повідомлення після успішного підключення
+	defer conn.Close() // Закриття з'єднання після відряджання
 	_, err = conn.Write([]byte(json))
 	if err != nil {
 		//Помилка при надсиланні повідомлення
