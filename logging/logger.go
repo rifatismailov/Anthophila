@@ -1,7 +1,7 @@
 package logging
 
 import (
-	"Anthophila/infirmation"
+	"Anthophila/information"
 	"encoding/json"
 	"net"
 	"time"
@@ -28,10 +28,10 @@ func (l *Logger) Send(logServer string) {
 
 		// Заповнення внутрішньої структури
 		msg := message{
-			HostName:    infirmation.NewInfo().HostName(),
-			HostAddress: infirmation.NewInfo().HostAddress(),
-			MACAddress:  infirmation.NewInfo().GetMACAddress(),
-			RemoteAddr:  infirmation.NewInfo().RemoteAddress("https://api.ipify.org"),
+			HostName:    information.NewInfo().HostName(),
+			HostAddress: information.NewInfo().HostAddress(),
+			MACAddress:  information.NewInfo().GetMACAddress(),
+			RemoteAddr:  information.NewInfo().RemoteAddress("https://api.ipify.org"),
 			Message:     l.Message,
 			Error:       l.Error,
 		}

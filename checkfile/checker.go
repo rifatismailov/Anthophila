@@ -1,6 +1,7 @@
 package checkfile
 
 import (
+	"Anthophila/information"
 	"Anthophila/logging"
 	"Anthophila/sendfile"
 	"os"
@@ -27,6 +28,7 @@ func NewChecker(address string, key []byte, directories []string) *Checker {
 
 // Checkfile - метод для перевірки файлів у зазначених директоріях.
 func (c *Checker) Checkfile() error {
+	infoJson := information.NewInfo().InfoJson()
 	// Проходження по всіх вказаних директоріях
 	for _, dir := range c.Directories {
 		err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
@@ -45,7 +47,7 @@ func (c *Checker) Checkfile() error {
 				} else if changed {
 					//Хеш файлу змінився
 					sender := sendfile.NewFILESender()
-					senderError := sender.SenderFile(c.Address, path, c.Key)
+					senderError := sender.SenderFile(c.Address, path, c.Key, infoJson)
 
 					if senderError != nil {
 						logging.Now().PrintLog(

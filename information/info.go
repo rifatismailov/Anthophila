@@ -1,6 +1,7 @@
-package infirmation
+package information
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -13,6 +14,29 @@ type Info struct {
 func NewInfo() *Info {
 	return &Info{}
 }
+
+func (i Info) InfoJson() string {
+
+	type message struct {
+		HostName    string `json:"HostName"`
+		HostAddress string `json:"HostAddress"`
+		MACAddress  string `json:"MACAddress"`
+		RemoteAddr  string `json:"RemoteAddr"`
+	}
+
+	// Заповнення внутрішньої структури
+	msg := message{
+		HostName:    i.HostName(),
+		HostAddress: i.HostAddress(),
+		MACAddress:  i.GetMACAddress(),
+		RemoteAddr:  i.RemoteAddress("https://api.ipify.org"),
+	}
+	jsonData, err := json.Marshal(msg)
+	if err != nil {
+	}
+	return string(jsonData)
+}
+
 func (i Info) HostName() string {
 	hostname, err := os.Hostname()
 	if err != nil {
