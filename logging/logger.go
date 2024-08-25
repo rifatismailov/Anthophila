@@ -67,5 +67,6 @@ func sendLogger(serverAddress, json string) {
 		//Помилка при надсиланні повідомлення
 	} else {
 		//Повідомлення надіслано успішно.
+
 	}
 }

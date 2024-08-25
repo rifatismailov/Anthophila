@@ -59,8 +59,9 @@ func (w *FileChecker) Start() {
 			time.Sleep(5 * time.Second)
 			errorChecker := checker.Checkfile()
 			if errorChecker != nil {
-				logger := logging.Logger{Message: "[FileChecker] Помилка:", Error: errorChecker.Error()}
-				logger.Send("localhost:6606")
+				logging.Now().PrintLog(
+					"[FileChecker] Помилка:",
+					errorChecker.Error())
 			}
 		}
 	}()
