@@ -26,7 +26,7 @@ func NewFILESender() *FILESender {
 func (f *FILESender) SenderFile(serverAddr, filePath string, key []byte) error {
 	conn, err := net.Dial("tcp", serverAddr)
 	if err != nil {
-		fmt.Printf("Помилка з'єднання: %v\n", err)
+		fmt.Printf("[SenderFile] Помилка з'єднання: %v\n", err)
 		return err
 	}
 	defer conn.Close()
@@ -36,7 +36,7 @@ func (f *FILESender) SenderFile(serverAddr, filePath string, key []byte) error {
 
 	// Перевірка довжини імені файлу
 	if len(fileNameBytes) > 256 {
-		fmt.Printf("Ім'я файлу занадто довге: %s\n", fileName)
+		fmt.Printf("[SenderFile] Ім'я файлу занадто довге: %s\n", fileName)
 		return err
 	}
 
@@ -46,14 +46,14 @@ func (f *FILESender) SenderFile(serverAddr, filePath string, key []byte) error {
 
 	_, err = conn.Write(paddedFileNameBytes)
 	if err != nil {
-		fmt.Printf("Помилка відправки імені файлу: %v\n", err)
+		fmt.Printf("[SenderFile]Помилка відправки імені файлу: %v\n", err)
 		return err
 	}
 
 	// Відкриття файлу
 	file, err := os.Open(filePath)
 	if err != nil {
-		fmt.Printf("Помилка відкриття файлу %s: %v\n", filePath, err)
+		fmt.Printf("[SenderFile] Помилка відкриття файлу %s: %v\n", filePath, err)
 		return err
 	}
 	defer file.Close()
@@ -62,14 +62,14 @@ func (f *FILESender) SenderFile(serverAddr, filePath string, key []byte) error {
 	hasher := md5.New()
 	_, err = io.Copy(hasher, file)
 	if err != nil {
-		fmt.Printf("Помилка обчислення хеш-сумми для файлу %s: %v\n", filePath, err)
+		fmt.Printf("[SenderFile] Помилка обчислення хеш-сумми для файлу %s: %v\n", filePath, err)
 		return err
 	}
 	fileHash := hasher.Sum(nil)
 
 	_, err = conn.Write(fileHash)
 	if err != nil {
-		fmt.Printf("Помилка відправки хеш-сумми файлу: %v\n", err)
+		fmt.Printf("[SenderFile] Помилка відправки хеш-сумми файлу: %v\n", err)
 		return err
 	}
 
@@ -79,17 +79,32 @@ func (f *FILESender) SenderFile(serverAddr, filePath string, key []byte) error {
 	encrypt := cryptofile.NewFILEEncryptor()
 	encryptedFile, err := encrypt.EncryptingFile(file, key)
 	if err != nil {
-		fmt.Printf("Помилка шифрування файлу %s: %v\n", filePath, err)
+		fmt.Printf("[SenderFile] Помилка шифрування файлу %s: %v\n", filePath, err)
 		return err
 	}
 	defer encryptedFile.Close()
 
 	_, err = io.Copy(conn, encryptedFile)
 	if err != nil {
-		fmt.Printf("Помилка відправки зашифрованого файлу %s: %v\n", filePath, err)
+		fmt.Printf("[SenderFile] Помилка відправки зашифрованого файлу %s: %v\n", filePath, err)
 		return err
 	}
 
-	fmt.Printf("Зашифрований файл відправлено: %s\n", filePath)
+	fmt.Printf("[SenderFile] Зашифрований файл відправлено: %s\n", filePath)
+	err = deleteFile(filePath + ".enc")
+	if err != nil {
+		fmt.Printf("Помилка при видаленні Зашифрованого файлу: %v\n", err)
+	} else {
+		fmt.Println("Файл успішно видалено.")
+	}
+	return nil
+}
+
+// deleteFile видаляє файл за вказаним шляхом
+func deleteFile(filePath string) error {
+	err := os.Remove(filePath)
+	if err != nil {
+		return err
+	}
 	return nil
 }

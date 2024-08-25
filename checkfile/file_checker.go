@@ -58,7 +58,7 @@ func (w *FileChecker) Start() {
 			time.Sleep(5 * time.Second)
 			errorChecker := checker.Checkfile()
 			if errorChecker != nil {
-				fmt.Println("Error:", errorChecker)
+				fmt.Println("[FileChecker] Помилка:", errorChecker)
 			}
 		}
 		fmt.Println("FileChecker: All iterations finished")

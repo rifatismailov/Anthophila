@@ -47,7 +47,21 @@ func (fi FileInfo) CheckAndWriteHash(filePath string, jsonFilePath string) (bool
 			// Хеш змінився, оновлюємо інформацію
 			if info.Hash != hash {
 				existingData[i].Hash = hash
-				return true, nil
+
+				// Запис оновлених даних в JSON файл
+				file, err := os.Create(jsonFilePath)
+				if err != nil {
+					return false, err
+				}
+				defer file.Close()
+
+				encoder := json.NewEncoder(file)
+				err = encoder.Encode(existingData)
+				if err != nil {
+					return false, err
+				}
+
+				return true, nil // Хеш змінився і був оновлений
 			}
 			return false, nil // Хеш не змінився
 		}
@@ -76,8 +90,8 @@ func (fi FileInfo) CheckAndWriteHash(filePath string, jsonFilePath string) (bool
 	return true, nil // Файл додано або оновлено
 }
 
+// calculateHash обчислює SHA-256 хеш файлу
 func calculateHash(filePath string) (string, error) {
-	// Обчислення SHA-256 хешу
 	file, err := os.Open(filePath)
 	if err != nil {
 		return "", err
@@ -87,7 +101,6 @@ func calculateHash(filePath string) (string, error) {
 	hash := sha256.New()
 	if _, err := io.Copy(hash, file); err != nil {
 		return "", err
-
 	}
 	return fmt.Sprintf("%x", hash.Sum(nil)), nil
 }

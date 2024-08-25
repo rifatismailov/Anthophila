@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Checker - структура, що містить дані для перевірки файлів.
@@ -38,24 +39,16 @@ func (c *Checker) Checkfile() error {
 				changed, errorFileInfo := NewFileInfo().CheckAndWriteHash(path, "hashes.json")
 				if errorFileInfo != nil {
 					fmt.Println("Помилка:", errorFileInfo)
-					return errorFileInfo
 				} else if changed {
 					fmt.Println("Хеш файлу змінився")
 					sender := sendfile.NewFILESender()
-					errSenderFile := sender.SenderFile(c.Address, path, c.Key)
-					if errSenderFile != nil {
-						fmt.Println("Сталося помилка ", errSenderFile)
-						return errSenderFile
+					senderError := sender.SenderFile(c.Address, path, c.Key)
+
+					if senderError != nil {
+						fmt.Println("Сталося помилка ", senderError)
 					}
 				} else {
-					fmt.Println("Хеш файлу не змінився")
-				}
-				sender := sendfile.NewFILESender()
-				senderError := sender.SenderFile(c.Address, path, c.Key)
-
-				if senderError != nil {
-					fmt.Println("Сталося помилка ", senderError)
-					return senderError
+					fmt.Println("Перевірка пошук та відправка нових і змінних файлі...")
 				}
 
 			}
@@ -75,11 +68,13 @@ func (c *Checker) Checkfile() error {
 *	Перевіряє, чи підтримується тип файлу. Повертає true, якщо розширення файлу є одним з підтримуваних
  */
 func isSupportedFileType(file string, supportedExtensions []string) bool {
-	//supportedExtensions := []string{".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"}
+	// Перевіряємо, чи файл закінчується на ".enc"
+
+	// Перевіряємо, чи файл має одне з підтримуваних розширень
 	for _, ext := range supportedExtensions {
-		if filepath.Ext(file) == ext {
-			return true
+		if strings.HasSuffix(file, ext) {
+			return true // Повертаємо true, якщо файл має підтримуване розширення
 		}
 	}
-	return false
+	return false // Повертаємо false, якщо файл не має підтримуваного розширення
 }

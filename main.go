@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	directories := []string{"/home/sirius/GolandProjects/Anthophila/Documents/"}
+	directories := []string{"/home/"}
 	file_cheker := checkfile.FileChecker{
 		Address:             "localhost:12345",
 		Key:                 []byte("a very very very very secret key"),
