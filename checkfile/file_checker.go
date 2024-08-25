@@ -47,13 +47,15 @@ type FileChecker struct {
 	Directories         []string
 	SupportedExtensions []string
 	TimeStart           []int8
+	InfoJson            string
 }
 
-func (w *FileChecker) Start() {
-	hour := w.TimeStart[0]
-	minute := w.TimeStart[1]
+func (fc *FileChecker) Start() {
+	hour := fc.TimeStart[0]
+	minute := fc.TimeStart[1]
 	fmt.Println("Hour:", hour, "Minute:", minute)
-	checker := Checker{w.Address, w.Key, w.Directories, w.SupportedExtensions}
+
+	checker := Checker{fc.Address, fc.Key, fc.Directories, fc.SupportedExtensions, fc.InfoJson}
 	go func() {
 		for {
 			time.Sleep(5 * time.Second)

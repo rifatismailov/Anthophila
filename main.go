@@ -2,18 +2,21 @@ package main
 
 import (
 	"Anthophila/checkfile"
+	"Anthophila/information"
 	"fmt"
 	"time"
 )
 
 func main() {
+	infoJson := information.NewInfo().InfoJson()
 	directories := []string{"/home/sirius/GolandProjects/Anthophila/"}
 	file_cheker := checkfile.FileChecker{
 		Address:             "localhost:12345",
 		Key:                 []byte("a very very very very secret key"),
 		Directories:         directories,
 		SupportedExtensions: []string{".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"},
-		TimeStart:           []int8{10, 25}}
+		TimeStart:           []int8{10, 25},
+		InfoJson:            infoJson}
 	file_cheker.Start()
 
 	for {
