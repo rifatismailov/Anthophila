@@ -1,8 +1,8 @@
 package checkfile
 
 import (
+	"Anthophila/logging"
 	"Anthophila/sendfile"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,24 +31,28 @@ func (c *Checker) Checkfile() error {
 	for _, dir := range c.Directories {
 		err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				fmt.Printf("Помилка доступу до шляху %s: %v\n", path, err)
+				logging.Now().PrintLog(
+					"[Checkfile] Помилка доступу до шляху",
+					"{Path :{"+path+"} Err :{"+err.Error()+"}}")
 				return nil
 			}
 			//Перевіряє, чи підтримується тип файлу
 			if !info.IsDir() && isSupportedFileType(path, c.SupportedExtensions) {
 				changed, errorFileInfo := NewFileInfo().CheckAndWriteHash(path, "hashes.json")
 				if errorFileInfo != nil {
-					fmt.Println("Помилка:", errorFileInfo)
+					logging.Now().PrintLog(
+						"[Checkfile] Помилка під час перевірки підтримування тип файлу", path)
 				} else if changed {
-					fmt.Println("Хеш файлу змінився")
+					//Хеш файлу змінився
 					sender := sendfile.NewFILESender()
 					senderError := sender.SenderFile(c.Address, path, c.Key)
 
 					if senderError != nil {
-						fmt.Println("Сталося помилка ", senderError)
+						logging.Now().PrintLog(
+							"[Checkfile] Помилка під час відправка файлу", path)
 					}
 				} else {
-					fmt.Println("Перевірка пошук та відправка нових і змінних файлі...")
+					//fmt.Println("Перевірка пошук та відправка нових і змінних файлі...")
 				}
 
 			}
@@ -56,7 +60,9 @@ func (c *Checker) Checkfile() error {
 		})
 
 		if err != nil {
-			fmt.Printf("Помилка обходу шляху %s: %v\n", dir, err)
+			logging.Now().PrintLog(
+				"[Checkfile] Помилка обходу шляху",
+				"{Dir :{"+dir+"} Err :{"+err.Error()+"}}")
 			return err
 		}
 	}

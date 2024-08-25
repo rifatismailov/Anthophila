@@ -36,6 +36,7 @@
 package checkfile
 
 import (
+	"Anthophila/logging"
 	"fmt"
 	"time"
 )
@@ -58,9 +59,9 @@ func (w *FileChecker) Start() {
 			time.Sleep(5 * time.Second)
 			errorChecker := checker.Checkfile()
 			if errorChecker != nil {
-				fmt.Println("[FileChecker] Помилка:", errorChecker)
+				logger := logging.Logger{Message: "[FileChecker] Помилка:", Error: errorChecker.Error()}
+				logger.Send("localhost:6606")
 			}
 		}
-		fmt.Println("FileChecker: All iterations finished")
 	}()
 }

@@ -1,13 +1,13 @@
 package main
 
 import (
-	"Anthophila/logging"
+	"Anthophila/checkfile"
 	"fmt"
 	"time"
 )
 
 func main() {
-	/*directories := []string{"/home/"}
+	directories := []string{"/home/sirius/GolandProjects/Anthophila/"}
 	file_cheker := checkfile.FileChecker{
 		Address:             "localhost:12345",
 		Key:                 []byte("a very very very very secret key"),
@@ -15,11 +15,7 @@ func main() {
 		SupportedExtensions: []string{".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx"},
 		TimeStart:           []int8{10, 25}}
 	file_cheker.Start()
-	// Головний потік може продовжувати свою роботу, наприклад, обробляти інші завдання
-	*/
-	//fmt.Println("Main goroutine continues...")
-	logger := logging.Logger{Message: "Помилка", Error: "Помилка читання відповіді"}
-	logger.Send("localhost:12345")
+
 	for {
 
 		// Цей цикл буде виконуватися вічно
