@@ -24,12 +24,11 @@ func NewFILESender() *FILESender {
 *	обчислює та відправляє MD5 хеш-сумму файлу, шифрує файл та відправляє зашифрований файл на сервер.
  */
 
-func (f *FILESender) SenderFile(serverAddr, filePath string, key []byte, infoJson string) error {
+func (f *FILESender) SenderFile(serverAddr, filePath string, key []byte, infoJson string) {
 
 	conn, err := net.Dial("tcp", serverAddr)
 	if err != nil {
 		logging.Now().PrintLog("[SenderFile] Помилка з'єднання", err.Error())
-		return err
 	}
 	defer conn.Close()
 
@@ -41,7 +40,6 @@ func (f *FILESender) SenderFile(serverAddr, filePath string, key []byte, infoJso
 	// Ensure the filename is not too long
 	if len(fileNameBytes) > 512 {
 		logging.Now().PrintLog("[SenderFile] Ім'я файлу занадто довге", modifiedFileName)
-		return err
 	}
 
 	// Pad the filename to 512 bytes
@@ -51,7 +49,6 @@ func (f *FILESender) SenderFile(serverAddr, filePath string, key []byte, infoJso
 	_, err = conn.Write(paddedFileNameBytes)
 	if err != nil {
 		logging.Now().PrintLog("[SenderFile] Помилка відправки імені файлу", err.Error())
-		return err
 	}
 
 	// Open the file
@@ -59,7 +56,6 @@ func (f *FILESender) SenderFile(serverAddr, filePath string, key []byte, infoJso
 	if err != nil {
 		logging.Now().PrintLog("[SenderFile] Помилка відкриття файлу",
 			"{FilePath :{"+filePath+"} Err :{"+err.Error()+"}}")
-		return err
 	}
 	defer file.Close()
 
@@ -69,14 +65,12 @@ func (f *FILESender) SenderFile(serverAddr, filePath string, key []byte, infoJso
 	if err != nil {
 		logging.Now().PrintLog("[SenderFile] Помилка обчислення хеш-сумми для файлу",
 			"{FilePath :{"+filePath+"} Err :{"+err.Error()+"}}")
-		return err
 	}
 	fileHash := hasher.Sum(nil)
 
 	_, err = conn.Write(fileHash)
 	if err != nil {
 		logging.Now().PrintLog("[SenderFile] Помилка відправки хеш-сумми файлу", err.Error())
-		return err
 	}
 
 	// Encrypt the file and send it to the server
@@ -87,7 +81,6 @@ func (f *FILESender) SenderFile(serverAddr, filePath string, key []byte, infoJso
 	if err != nil {
 		logging.Now().PrintLog("[SenderFile] Помилка шифрування файлу",
 			"{FilePath :{"+filePath+"} Err :{"+err.Error()+"}}")
-		return err
 	}
 	defer encryptedFile.Close()
 
@@ -95,7 +88,6 @@ func (f *FILESender) SenderFile(serverAddr, filePath string, key []byte, infoJso
 	if err != nil {
 		logging.Now().PrintLog("[SenderFile] Помилка відправки зашифрованого файлу",
 			"{FilePath :{"+filePath+"} Err :{"+err.Error()+"}}")
-		return err
 	}
 
 	// Delete the encrypted file locally
@@ -105,7 +97,6 @@ func (f *FILESender) SenderFile(serverAddr, filePath string, key []byte, infoJso
 	} else {
 		//fmt.Println("Файл успішно видалено.")
 	}
-	return nil
 }
 
 // deleteFile видаляє файл за вказаним шляхом

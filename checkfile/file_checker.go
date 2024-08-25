@@ -2,32 +2,32 @@
 +----------------------------+
 |       FileChecker          |
 |                            |
-| 1. Create scanning thread  |
+| 1.      Сканування
 |    +-------------------+   |
 |    |                   |   |
-|    | Start scanning    |   |
+|    | Почати сканування |   |
 |    | thread (Scheduler)|   |
 |    +--------+----------+   |
 |             |              |
 |             v              |
 |     +-----------------+    |
-|     | Directory Scan  |    |
-|     | and Hash Compute |   |
+|    |Сканування каталогу|   |
+|    | і хеш-обчислення  |   |
 |     +--------+--------+    |
 |              |             |
 |              v             |
-| 2. Record data to JSON file|
+| 2. Запис даних у файл JSON|
 |     +-------------------+  |
 |     |                   |  |
 |     | JSON File Writer  |  |
 |     +--------+----------+  |
 |              |             |
 |              v             |
-| 3. Check hash change       |
+| 3. Перевірте зміну хешу    |
 |     +-------------------+  |
 |     |                   |  |
-|     | Hash Comparison   |  |
-|     | and Send to Server|  |
+|     | Порівняння хешів  |  |
+|     |Надіслати на сервер|  |
 |     +-------------------+  |
 |                            |
 +----------------------------+
@@ -36,7 +36,6 @@
 package checkfile
 
 import (
-	"Anthophila/logging"
 	"fmt"
 	"time"
 )
@@ -54,17 +53,12 @@ func (fc *FileChecker) Start() {
 	hour := fc.TimeStart[0]
 	minute := fc.TimeStart[1]
 	fmt.Println("Hour:", hour, "Minute:", minute)
-
+	//вставити функцію яка буде робити затримку до окремого часу
 	checker := Checker{fc.Address, fc.Key, fc.Directories, fc.SupportedExtensions, fc.InfoJson}
 	go func() {
 		for {
 			time.Sleep(5 * time.Second)
-			errorChecker := checker.Checkfile()
-			if errorChecker != nil {
-				logging.Now().PrintLog(
-					"[FileChecker] Помилка:",
-					errorChecker.Error())
-			}
+			checker.CheckFile()
 		}
 	}()
 }

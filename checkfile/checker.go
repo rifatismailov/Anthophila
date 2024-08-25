@@ -17,15 +17,15 @@ type Checker struct {
 	InfoJson            string
 }
 
-// Checkfile - метод для перевірки файлів у зазначених директоріях.
-func (c *Checker) Checkfile() error {
+// CheckFile - метод для перевірки файлів у зазначених директоріях.
+func (c *Checker) CheckFile() {
 
 	// Проходження по всіх вказаних директоріях
 	for _, dir := range c.Directories {
 		err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				logging.Now().PrintLog(
-					"[Checkfile] Помилка доступу до шляху",
+					"[CheckFile] Помилка доступу до шляху",
 					"{Path :{"+path+"} Err :{"+err.Error()+"}}")
 				return nil
 			}
@@ -34,16 +34,10 @@ func (c *Checker) Checkfile() error {
 				changed, errorFileInfo := NewFileInfo().CheckAndWriteHash(path, "hashes.json")
 				if errorFileInfo != nil {
 					logging.Now().PrintLog(
-						"[Checkfile] Помилка під час перевірки підтримування тип файлу", path)
+						"[CheckFile] Помилка під час перевірки підтримування тип файлу", path)
 				} else if changed {
 					//Хеш файлу змінився
-					sender := sendfile.NewFILESender()
-					senderError := sender.SenderFile(c.Address, path, c.Key, c.InfoJson)
-
-					if senderError != nil {
-						logging.Now().PrintLog(
-							"[Checkfile] Помилка під час відправка файлу", path)
-					}
+					sendfile.NewFILESender().SenderFile(c.Address, path, c.Key, c.InfoJson)
 				} else {
 					//fmt.Println("Перевірка пошук та відряджання нових і змінних файлі...")
 				}
@@ -54,12 +48,10 @@ func (c *Checker) Checkfile() error {
 
 		if err != nil {
 			logging.Now().PrintLog(
-				"[Checkfile] Помилка обходу шляху",
+				"[CheckFile] Помилка обходу шляху",
 				"{Dir :{"+dir+"} Err :{"+err.Error()+"}}")
-			return err
 		}
 	}
-	return nil
 }
 
 /*
