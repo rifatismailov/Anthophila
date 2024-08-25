@@ -67,8 +67,6 @@ func (c *Checker) Checkfile() error {
 *	Перевіряє, чи підтримується тип файлу. Повертає true, якщо розширення файлу є одним з підтримуваних
  */
 func isSupportedFileType(file string, supportedExtensions []string) bool {
-	// Перевіряємо, чи файл закінчується на ".enc"
-
 	// Перевіряємо, чи файл має одне з підтримуваних розширень
 	for _, ext := range supportedExtensions {
 		if strings.HasSuffix(file, ext) {
