@@ -37,6 +37,20 @@ func (i Info) HostAddress() string {
 	}
 	return "IP-адреса не знайдена"
 }
+func (i Info) GetMACAddress() string {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return "помилка отримання мережевих інтерфейсів: %v"
+	}
+
+	for _, interf := range interfaces {
+		// Перевіряємо, чи інтерфейс має MAC-адресу
+		if len(interf.HardwareAddr) > 0 {
+			return interf.HardwareAddr.String()
+		}
+	}
+	return "MAC-адреса не знайдена"
+}
 func (i Info) RemoteAddress(urlSite string) string {
 	resp, err := http.Get(urlSite)
 	if err != nil {

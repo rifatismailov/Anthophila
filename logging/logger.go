@@ -20,6 +20,7 @@ func (l *Logger) Send(logServer string) {
 		type message struct {
 			HostName    string `json:"HostName"`
 			HostAddress string `json:"HostAddress"`
+			MACAddress  string `json:"MACAddress"`
 			RemoteAddr  string `json:"RemoteAddr"`
 			Message     string `json:"Message"`
 			Error       string `json:"Error"`
@@ -29,6 +30,7 @@ func (l *Logger) Send(logServer string) {
 		msg := message{
 			HostName:    infirmation.NewInfo().HostName(),
 			HostAddress: infirmation.NewInfo().HostAddress(),
+			MACAddress:  infirmation.NewInfo().GetMACAddress(),
 			RemoteAddr:  infirmation.NewInfo().RemoteAddress("https://api.ipify.org"),
 			Message:     l.Message,
 			Error:       l.Error,
