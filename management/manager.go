@@ -2,99 +2,66 @@ package management
 
 import (
 	"Anthophila/information"
-	"bufio"
 	"github.com/gorilla/websocket"
 	"log"
-	"os"
-	"os/signal"
 	"time"
+)
+
+const (
+	serverAddr        = "ws://localhost:8080/ws"
+	reconnectInterval = 5 * time.Second
 )
 
 type Manager struct {
 }
 
 func (f *Manager) Start() {
+	macAddress := information.NewInfo().GetMACAddress()
+
+	var wSocket *websocket.Conn
+	var err error
+	var errPing error
 
 	for {
-		//{"sClient":"Bob","rClient":"Alex","message":"У JSON-повідомленні, яке ви надсилаєте, використовується неправильний регістр для цього ключа!"}
-
-		// Підключення до сервера
-		interrupt := make(chan os.Signal, 1)
-		signal.Notify(interrupt, os.Interrupt)
-
-		// Підключення до WebSocket-сервера
-		c, _, err := websocket.DefaultDialer.Dial("ws://localhost:8080/ws", nil)
+		// Спроба підключення до сервера
+		wSocket, _, err = websocket.DefaultDialer.Dial(serverAddr, nil)
 		if err != nil {
-			log.Fatal("dial:", err)
+			log.Printf("Error connecting to server: %v", err)
+			log.Printf("Retrying in %v...", reconnectInterval)
+			time.Sleep(reconnectInterval)
+			continue
 		}
-		defer c.Close()
 
-		done := make(chan struct{})
-
-		go func() {
-			defer close(done)
-			for {
-				_, message, err := c.ReadMessage()
-				if err != nil {
-					log.Println("Error reading from server:", err)
-					return
-				}
-				log.Printf("Received: %s", message)
-			}
-		}()
-		macAddress := information.NewInfo().GetMACAddress()
-		// Надсилання повідомлення
-		err = c.WriteMessage(websocket.TextMessage, []byte("nick:"+macAddress))
+		// Підключення успішне, надсилаємо нікнейм
+		err = wSocket.WriteMessage(websocket.TextMessage, []byte("nick:"+macAddress))
 		if err != nil {
-			log.Println("Error sending message:", err)
-			return
-		}
-		scanner := bufio.NewScanner(os.Stdin)
-
-		for {
-			log.Print("Enter message: ")
-			scanner.Scan()
-			text := scanner.Text()
-
-			if text == "exit" {
-				break
-			}
-
-			err = c.WriteMessage(websocket.TextMessage, []byte(text))
-			if err != nil {
-				log.Println("Error sending message:", err)
-				return
-			}
+			log.Printf("Error sending nickname: %v", err)
+			wSocket.Close()
+			log.Printf("Retrying in %v...", reconnectInterval)
+			time.Sleep(reconnectInterval)
+			continue
 		}
 
-		ticker := time.NewTicker(time.Second)
-		defer ticker.Stop()
-
+		// Запуск горутіни для отримання повідомлень від сервера
+		go NewReader().ReadMessage(wSocket)
+		// Запуск горутіни для відправки повідомлень від сервера
+		go NewSender().sendMessage(wSocket)
+		// Основний цикл для надсилання повідомлень
 		for {
 			select {
-			case <-done:
-				return
-			case <-ticker.C:
-				err := c.WriteMessage(websocket.TextMessage, []byte("Ping"))
-				if err != nil {
-					log.Println("Error writing to server:", err)
-					return
-				}
-			case <-interrupt:
-				log.Println("interrupt")
+			case <-time.After(reconnectInterval):
+				errPing = wSocket.WriteMessage(websocket.TextMessage, []byte("Ping"))
+			}
+			if errPing != nil {
+				log.Printf("Error writing to server: %v", errPing)
 
-				err := c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-				if err != nil {
-					log.Println("Error during close handshake:", err)
-					return
-				}
-				select {
-				case <-done:
-				case <-time.After(time.Second):
-				}
-				return
+				break
 			}
 		}
-	}
 
+		// Якщо ми потрапили сюди, це означає, що з'єднання було розірвано
+		log.Printf("Connection closed. Retrying in %v...", reconnectInterval)
+		wSocket.Close()
+		time.Sleep(reconnectInterval)
+	}
 }
