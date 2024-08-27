@@ -2,6 +2,7 @@ package terminal
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -9,6 +10,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"time"
 )
 
 // TerminalManager представляє структуру для керування терміналом
@@ -18,6 +20,7 @@ type TerminalManager struct {
 	output chan string
 	wg     *sync.WaitGroup
 	pid    int
+	mu     sync.Mutex // Для синхронізації доступу до cmd
 }
 
 // NewTerminalManager створює новий екземпляр TerminalManager
@@ -39,17 +42,60 @@ func NewTerminalManager() *TerminalManager {
 }
 
 // Start запускає термінал та потоки для взаємодії з ним
-func (tm *TerminalManager) Start() {
+func (tm *TerminalManager) Start() error {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+
+	// Якщо термінал уже запущений, повертаємо помилку
+	if tm.cmd != nil && tm.cmd.Process != nil && tm.cmd.ProcessState == nil {
+		return errors.New("terminal already running")
+	}
+
+	// Оновлюємо команду для терміналу
+	tm.cmd = exec.Command(tm.cmd.Path)
+
+	stdin, err := tm.cmd.StdinPipe()
+	if err != nil {
+		log.Println("Error creating stdin pipe:", err)
+		return err
+	}
+	stdout, err := tm.cmd.StdoutPipe()
+	if err != nil {
+		log.Println("Error creating stdout pipe:", err)
+		return err
+	}
+	stderr, err := tm.cmd.StderrPipe()
+	if err != nil {
+		log.Println("Error creating stderr pipe:", err)
+		return err
+	}
+
+	if err := tm.cmd.Start(); err != nil {
+		log.Println("Error starting command:", err)
+		return err
+	}
+
+	tm.pid = tm.cmd.Process.Pid
+
 	tm.wg.Add(1)
-	go tm.runTerminal()
+	go tm.runTerminal(stdin, stdout, stderr)
+
+	return nil
 }
 
 // Stop зупиняє термінал
 func (tm *TerminalManager) Stop() {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+
+	if tm.cmd.Process == nil {
+		return
+	}
+
 	tm.input <- "exit"
-	close(tm.input)
+	tm.cmd.Process.Kill() // Завершуємо процес
+	tm.cmd = nil          // Скидаємо cmd
 	tm.wg.Wait()
-	close(tm.output)
 }
 
 // SendCommand надсилає команду до терміналу
@@ -61,34 +107,19 @@ func (tm *TerminalManager) SendCommand(command string) {
 func (tm *TerminalManager) GetOutput() <-chan string {
 	return tm.output
 }
+
+// Restart перезапускає термінал
 func (tm *TerminalManager) Restart() {
-	tm.Stop()  // Зупиняємо горутину
-	tm.Start() // Перезапускаємо горутину
+	tm.Stop() // Зупиняємо термінал
+	time.Sleep(1 * time.Second)
+	if err := tm.Start(); err != nil {
+		log.Println("Failed to start terminal:", err)
+	}
 }
 
-// Внутрішній метод для керування терміналом
-func (tm *TerminalManager) runTerminal() {
-
+// runTerminal запускає обробку вводу/виводу термінала
+func (tm *TerminalManager) runTerminal(stdin io.WriteCloser, stdout io.Reader, stderr io.Reader) {
 	defer tm.wg.Done()
-
-	stdin, err := tm.cmd.StdinPipe()
-	if err != nil {
-		log.Fatal("Error creating stdin pipe:", err)
-	}
-	stdout, err := tm.cmd.StdoutPipe()
-	if err != nil {
-		log.Fatal("Error creating stdout pipe:", err)
-	}
-	stderr, err := tm.cmd.StderrPipe()
-	if err != nil {
-		log.Fatal("Error creating stderr pipe:", err)
-	}
-
-	if err := tm.cmd.Start(); err != nil {
-		log.Fatal("Error starting command:", err)
-	}
-
-	tm.pid = tm.cmd.Process.Pid // Зберігаємо PID
 
 	go func() {
 		defer close(tm.output)
@@ -124,17 +155,15 @@ func (tm *TerminalManager) runTerminal() {
 	for command := range tm.input {
 		if strings.TrimSpace(command) == "exit" {
 			stdin.Close()
-			tm.cmd.Process.Kill()
 			return
 		}
 
 		if strings.TrimSpace(command) == "stop" {
-			// Завершити процес за PID
-
 			continue
 		}
+
 		if strings.TrimSpace(command) == "sudo su" {
-			fmt.Println("YOU MAST BE SUDO:")
+			fmt.Println("YOU MUST BE SUDO:")
 			continue
 		}
 
@@ -145,26 +174,15 @@ func (tm *TerminalManager) runTerminal() {
 				command = fmt.Sprintf("ping -c 4 %s", strings.Join(parts[1:], " "))
 			}
 		}
+
 		_, err := io.WriteString(stdin, command+"\n")
 		if err != nil {
 			log.Println("Error writing to stdin:", err)
-			tm.Start()
+			tm.Restart() // Перезапуск термінала при помилці
 		}
 	}
 
 	if err := tm.cmd.Wait(); err != nil {
 		log.Println("Error waiting for command:", err)
-	}
-}
-
-// Надсилає сигнал до процесу
-func (tm *TerminalManager) sendSignalToProcess(signal string) {
-	log.Println("Kill Procces:")
-	var signalCmd *exec.Cmd
-
-	signalCmd = exec.Command("kill", signal, fmt.Sprintf("%d", tm.cmd.Process.Pid))
-
-	if err := signalCmd.Run(); err != nil {
-		log.Println("Error sending signal to process:", err)
 	}
 }
