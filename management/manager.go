@@ -43,9 +43,9 @@ func (f *Manager) Start() {
 		}
 
 		// Запуск горутіни для отримання повідомлень від сервера
-		go NewReader().ReadMessage(wSocket)
+		go NewReader().ReadMessageCommand(wSocket)
 		// Запуск горутіни для відправки повідомлень від сервера
-		go NewSender().sendMessage(wSocket)
+		//go NewSender().sendMessage(wSocket)
 		// Основний цикл для надсилання повідомлень
 		for {
 			select {
