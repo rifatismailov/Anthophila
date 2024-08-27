@@ -15,7 +15,7 @@ func NewReader() *Reader {
 	return new(Reader)
 }
 
-// Обробка отриманих повідомлень
+// ReadMessage Обробка отриманих повідомлень
 func (r *Reader) ReadMessage(ws *websocket.Conn) {
 	for {
 		_, message, err := ws.ReadMessage()
@@ -40,7 +40,7 @@ type myMessage struct {
 	Message string `json:"message"`
 }
 
-// Обробка отриманих команд через WebSocket
+// ReadMessageCommand Обробка отриманих команд через WebSocket
 func (r *Reader) ReadMessageCommand(wSocket *websocket.Conn) {
 
 	term := terminal.NewTerminalManager()
@@ -81,18 +81,16 @@ func (r *Reader) ReadMessageCommand(wSocket *websocket.Conn) {
 					log.Println("Error sending message:", err)
 				}
 			} else {
-				// Основний цикл для взаємодії з користувачем
+				// Основний TerminalManager() для взаємодії з користувачем терміналом
 				if strings.TrimSpace(cmd.Command) == "restart" {
-					//fmt.Println("Exiting...")
 					term.Stop()
-					terminal := terminal.NewTerminalManager()
-					if err := terminal.Start(); err != nil {
+					managerTerm := terminal.NewTerminalManager()
+					if err := managerTerm.Start(); err != nil {
 						log.Fatalf("Failed to start terminal: %v", err)
 					} else {
-						term = terminal
+						term = managerTerm
 						Terminal(wSocket, term)
 					}
-
 					continue
 				}
 				term.SendCommand(cmd.Command)
@@ -101,8 +99,10 @@ func (r *Reader) ReadMessageCommand(wSocket *websocket.Conn) {
 		}
 	}
 }
+
+// Terminal Запускає горутину для обробки виходу термінала
 func Terminal(wSocket *websocket.Conn, term *terminal.TerminalManager) {
-	// Запускаємо горутину для обробки виходу терміналу
+	// Запускаємо горутину для обробки виходу термінала
 	go func() {
 		for line := range term.GetOutput() {
 			msg := myMessage{

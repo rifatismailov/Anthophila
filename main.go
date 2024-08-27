@@ -22,7 +22,6 @@ func main() {
 	manager := management.Manager{}
 	manager.Start()
 	for {
-
 		// Цей цикл буде виконуватися вічно
 		fmt.Println("Main goroutine continues...")
 		time.Sleep(time.Second) // Можна змінити затримку за потреби
