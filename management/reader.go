@@ -82,7 +82,7 @@ func (r *Reader) ReadMessageCommand(wSocket *websocket.Conn) {
 				}
 			} else {
 				// Основний цикл для взаємодії з користувачем
-				if strings.TrimSpace(cmd.Command) == "exit" {
+				if strings.TrimSpace(cmd.Command) == "restart" {
 					//fmt.Println("Exiting...")
 					term.Stop()
 					terminal := terminal.NewTerminalManager()
