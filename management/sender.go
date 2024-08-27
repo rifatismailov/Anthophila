@@ -31,10 +31,11 @@ func (*Sender) sendMessage(wSocket *websocket.Conn) {
 		}
 	}
 }
-func (*Sender) sendMessageWith(wSocket *websocket.Conn, text []byte) {
+func (*Sender) sendMessageWith(wSocket *websocket.Conn, text []byte) error {
 	err := wSocket.WriteMessage(websocket.TextMessage, text)
 	if err != nil {
 		log.Println("Error sending message:", err)
-		return
+		return err
 	}
+	return err
 }

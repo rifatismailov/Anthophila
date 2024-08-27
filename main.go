@@ -1,11 +1,7 @@
 package main
 
 import (
-	"Anthophila/terminal"
-	"bufio"
-	"fmt"
-	"os"
-	"strings"
+	"Anthophila/management"
 )
 
 func main() {
@@ -25,39 +21,42 @@ func main() {
 		fmt.Println("Main goroutine continues...")
 		time.Sleep(time.Second) // Можна змінити затримку за потреби
 	}
-
+	*/
 	manager := management.Manager{}
-	manager.Start()*/
-	// Створюємо новий об'єкт TerminalManager
-	terminal := terminal.NewTerminalManager()
+	manager.Start()
+	/*
+		// Створюємо новий об'єкт TerminalManager
+		terminal := terminal.NewTerminalManager()
 
-	// Запускаємо термінал
-	terminal.Start()
+		// Запускаємо термінал
+		terminal.Start()
 
-	// Запускаємо горутину для обробки виходу терміналу
-	go func() {
-		for line := range terminal.GetOutput() {
-			fmt.Printf("Terminal > %s", line) //./sudo_expect.sh
+		// Запускаємо горутину для обробки виходу терміналу
+		go func() {
+			for line := range terminal.GetOutput() {
+				fmt.Printf("Terminal > %s", line) //./sudo_expect.sh
 
-		}
-	}()
+			}
+		}()
 
-	// Основний цикл для взаємодії з користувачемCTR^C
-	scanner := bufio.NewScanner(os.Stdin)
-	for {
-		if scanner.Scan() {
-			command := scanner.Text()
-			if strings.TrimSpace(command) == "exit" {
-				terminal.Stop()
+		// Основний цикл для взаємодії з користувачемCTR^C
+		scanner := bufio.NewScanner(os.Stdin)
+		for {
+			if scanner.Scan() {
+				command := scanner.Text()
+				if strings.TrimSpace(command) == "exit" {
+					terminal.Stop()
+					break
+				}
+				terminal.SendCommand(command)
+			}
+			if err := scanner.Err(); err != nil {
+				fmt.Fprintln(os.Stderr, "Error reading from stdin:", err)
 				break
 			}
-			terminal.SendCommand(command)
 		}
-		if err := scanner.Err(); err != nil {
-			fmt.Fprintln(os.Stderr, "Error reading from stdin:", err)
-			break
-		}
-	}
 
-	fmt.Println("Exiting...")
+		fmt.Println("Exiting...")
+
+	*/
 }
