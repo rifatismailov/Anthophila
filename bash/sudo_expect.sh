@@ -8,7 +8,7 @@ spawn sudo ping -c 4 8.8.8.8
 expect "Password:"
 
 # Відправляємо пароль
-send "27zeynalov\r"
+send "yorPass\r"
 
 # Далі взаємодіємо з процесом
 interact
