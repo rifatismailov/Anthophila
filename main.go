@@ -1,94 +1,12 @@
 package main
 
 import (
+	"Anthophila/terminal"
 	"bufio"
 	"fmt"
-	"io"
-	"log"
 	"os"
-	"os/exec"
-	"runtime"
-	"sync"
+	"strings"
 )
-
-func startTerminal(wg *sync.WaitGroup, input <-chan string, output chan<- string) {
-	defer wg.Done()
-
-	var cmd *exec.Cmd
-
-	// Вибір терміналу залежно від операційної системи
-	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd.exe")
-	} else {
-		cmd = exec.Command("bash")
-	}
-
-	// Створюємо канали для читання і запису
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		log.Fatal(err)
-	}
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		log.Fatal(err)
-	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Запускаємо команду (термінал)
-	if err := cmd.Start(); err != nil {
-		log.Fatal(err)
-	}
-
-	// Читаємо з терміналу (stdout)
-	go func() {
-		reader := bufio.NewReader(stdout)
-		for {
-			line, err := reader.ReadString('\n')
-			if err != nil {
-				if err == io.EOF {
-					break
-				}
-				log.Println("Error reading stdout:", err)
-			}
-			output <- line
-		}
-	}()
-
-	// Читаємо помилки з терміналу (stderr)
-	go func() {
-		reader := bufio.NewReader(stderr)
-		for {
-			line, err := reader.ReadString('\n')
-			if err != nil {
-				if err == io.EOF {
-					break
-				}
-				log.Println("Error reading stderr:", err)
-			}
-			output <- line
-		}
-	}()
-
-	// Читаємо команди від основного потоку
-	for command := range input {
-		if command == "exit" {
-			stdin.Close()
-			cmd.Process.Kill()
-			close(output)
-			return
-		}
-		_, err := io.WriteString(stdin, command+"\n")
-		if err != nil {
-			log.Println("Error writing to stdin:", err)
-		}
-	}
-
-	// Чекаємо завершення процесу
-	cmd.Wait()
-}
 
 func main() {
 	/*infoJson := information.NewInfo().InfoJson()
@@ -110,43 +28,36 @@ func main() {
 
 	manager := management.Manager{}
 	manager.Start()*/
-	wg := &sync.WaitGroup{}
-	input := make(chan string)
-	output := make(chan string)
+	// Створюємо новий об'єкт TerminalManager
+	terminal := terminal.NewTerminalManager()
 
-	wg.Add(1)
-	go startTerminal(wg, input, output)
+	// Запускаємо термінал
+	terminal.Start()
 
-	// Основний цикл для взаємодії з користувачем
+	// Запускаємо горутину для обробки виходу терміналу
+	go func() {
+		for line := range terminal.GetOutput() {
+			fmt.Printf("Terminal > %s", line) //./sudo_expect.sh
+
+		}
+	}()
+
+	// Основний цикл для взаємодії з користувачемCTR^C
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
-		fmt.Print("Enter command: ")
 		if scanner.Scan() {
 			command := scanner.Text()
-
-			if command == "exit" {
-				input <- "exit"
+			if strings.TrimSpace(command) == "exit" {
+				terminal.Stop()
 				break
 			}
-
-			// Передаємо команду в потік термінала
-			input <- command
-
-			// Отримуємо та виводимо відповідь
-			for {
-				select {
-				case line, ok := <-output:
-					if !ok {
-						break
-					}
-					fmt.Print(line)
-				}
-				break
-			}
+			terminal.SendCommand(command)
+		}
+		if err := scanner.Err(); err != nil {
+			fmt.Fprintln(os.Stderr, "Error reading from stdin:", err)
+			break
 		}
 	}
 
-	close(input)
-	wg.Wait()
-	fmt.Println("Program terminated.")
+	fmt.Println("Exiting...")
 }
