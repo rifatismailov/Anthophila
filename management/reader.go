@@ -49,7 +49,7 @@ func (r *Reader) ReadMessageCommand(wSocket *websocket.Conn) {
 			msg := myMessage{
 				SClient: information.NewInfo().GetMACAddress(),
 				RClient: cmd.SClient,
-				Message: "{terminal:{" + line + "}}",
+				Message: "{terminal:{" + strings.Trim(line, "\n") + "}}",
 			}
 			jsonData, err := json.Marshal(msg)
 			if err != nil {
@@ -95,14 +95,12 @@ func (r *Reader) ReadMessageCommand(wSocket *websocket.Conn) {
 				}
 			} else {
 				// Основний цикл для взаємодії з користувачем
-				for {
-					if strings.TrimSpace(cmd.Command) == "exit" {
-						terminal.Stop()
-						fmt.Println("Exiting...")
-						return
-					}
-					terminal.SendCommand(cmd.Command)
+				if strings.TrimSpace(cmd.Command) == "exit" {
+					terminal.Stop()
+					fmt.Println("Exiting...")
+					return
 				}
+				terminal.SendCommand(cmd.Command)
 			}
 		}
 	}
