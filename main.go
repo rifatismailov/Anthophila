@@ -113,7 +113,7 @@ func main() {
 	// Ініціалізація та запуск Manager
 	serverAddr := "ws://" + newConfig.ManagerServer + "/ws"
 	manager := management.Manager{}
-	manager.Start(newConfig.LogServer, serverAddr)
+	manager.Start(false, newConfig.LogServer, serverAddr)
 
 	for {
 		//fmt.Println("Main goroutine continues...")

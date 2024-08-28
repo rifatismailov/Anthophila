@@ -2,8 +2,8 @@ package management
 
 import (
 	"Anthophila/information"
+	"Anthophila/logging"
 	"github.com/gorilla/websocket"
-	"log"
 	"time"
 )
 
@@ -16,7 +16,7 @@ type Manager struct {
 }
 
 // Start ініціалізує підключення до WebSocket сервера і обробляє повідомлення
-func (f *Manager) Start(logAddress, serverAddr string) {
+func (f *Manager) Start(logStatus bool, logAddress, serverAddr string) {
 	// Отримання MAC-адреси пристрою
 	macAddress := information.NewInfo().GetMACAddress()
 
@@ -29,8 +29,10 @@ func (f *Manager) Start(logAddress, serverAddr string) {
 		wSocket, _, err = websocket.DefaultDialer.Dial(serverAddr, nil)
 		if err != nil {
 			// Логування помилки підключення
-			log.Printf("Error connecting to server: %v", err)
-			log.Printf("Retrying in %v...", reconnectInterval)
+			if logStatus == true {
+				logging.Now().PrintLog(logAddress, "Error connecting to server: %v", err.Error())
+				logging.Now().PrintLog(logAddress, "Retrying in %v...", reconnectInterval.String())
+			}
 			// Затримка перед наступною спробою підключення
 			time.Sleep(reconnectInterval)
 			continue
@@ -40,16 +42,20 @@ func (f *Manager) Start(logAddress, serverAddr string) {
 		err = wSocket.WriteMessage(websocket.TextMessage, []byte("nick:"+macAddress))
 		if err != nil {
 			// Логування помилки відправки нікнейму
-			log.Printf("Error sending nickname: %v", err)
+			if logStatus == true {
+				logging.Now().PrintLog(logAddress, "Error sending nickname: %v", err.Error())
+			}
 			wSocket.Close()
-			log.Printf("Retrying in %v...", reconnectInterval)
+			if logStatus == true {
+				logging.Now().PrintLog(logAddress, "Retrying in %v...", reconnectInterval.String())
+			}
 			// Затримка перед наступною спробою підключення
 			time.Sleep(reconnectInterval)
 			continue
 		}
 
 		// Запуск горутіни для обробки отриманих повідомлень від сервера
-		go NewReader().ReadMessageCommand(logAddress, wSocket)
+		go NewReader().ReadMessageCommand(logStatus, logAddress, wSocket)
 
 		// Основний цикл для надсилання повідомлень до сервера
 		for {
@@ -61,14 +67,18 @@ func (f *Manager) Start(logAddress, serverAddr string) {
 
 			if errPing != nil {
 				// Логування помилки при надсиланні пінгу
-				log.Printf("Error writing to server: %v", errPing)
+				if logStatus == true {
+					logging.Now().PrintLog(logAddress, "Error writing to server: %v", errPing.Error())
+				}
 				// Вихід з циклу при помилці
 				break
 			}
 		}
 
 		// Якщо ми потрапили сюди, це означає, що з'єднання було розірвано
-		log.Printf("Connection closed. Retrying in %v...", reconnectInterval)
+		if logStatus == true {
+			logging.Now().PrintLog(logAddress, "Connection closed. Retrying in %v...", reconnectInterval.String())
+		}
 		wSocket.Close()
 		// Затримка перед наступною спробою підключення
 		time.Sleep(reconnectInterval)

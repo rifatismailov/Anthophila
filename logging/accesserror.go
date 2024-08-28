@@ -16,7 +16,7 @@ type ErrorPaths struct {
 
 const errorFilePath = "error_paths.json"
 
-// Завантаження помилок з JSON-файлу
+// LoadErrorPaths Завантаження помилок з JSON-файлу
 func LoadErrorPaths() (*ErrorPaths, error) {
 	file, err := os.Open(errorFilePath)
 	if err != nil {
@@ -36,7 +36,7 @@ func LoadErrorPaths() (*ErrorPaths, error) {
 	return &errorPaths, nil
 }
 
-// Збереження помилок до JSON-файлу
+// SaveErrorPaths Збереження помилок до JSON-файлу
 func SaveErrorPaths(errorPaths *ErrorPaths) error {
 	file, err := os.Create(errorFilePath)
 	if err != nil {
@@ -48,7 +48,7 @@ func SaveErrorPaths(errorPaths *ErrorPaths) error {
 	return encoder.Encode(errorPaths)
 }
 
-// Перевірка, чи містить список шляху помилок певний шлях
+// IsPathInErrorList Перевірка, чи містить список шляху помилок певний шлях
 func IsPathInErrorList(path string, errorPaths *ErrorPaths) bool {
 	for _, ep := range errorPaths.Paths {
 		if ep.Path == path {
@@ -58,7 +58,7 @@ func IsPathInErrorList(path string, errorPaths *ErrorPaths) bool {
 	return false
 }
 
-// Додавання нового шляху помилки до списку
+// AddErrorPath Додавання нового шляху помилки до списку
 func AddErrorPath(path, errorMsg string, errorPaths *ErrorPaths) {
 	errorPaths.Paths = append(errorPaths.Paths, ErrorPath{
 		Path:  path,

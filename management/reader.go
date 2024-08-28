@@ -6,7 +6,6 @@ import (
 	"Anthophila/terminal"
 	"encoding/json"
 	"github.com/gorilla/websocket"
-	"log"
 	"strings"
 )
 
@@ -30,7 +29,6 @@ func (r *Reader) ReadMessage(logAddress string, ws *websocket.Conn) {
 		_, message, err := ws.ReadMessage()
 		if err != nil {
 			logging.Now().PrintLog(logAddress, "Error reading message: %v", err.Error())
-			return
 		}
 		logging.Now().PrintLog(logAddress, "Received: ", string(message))
 	}
@@ -59,24 +57,30 @@ type myMessage struct {
 // Опис:
 // Ця функція обробляє команди, отримані через WebSocket. Вона підтримує команди, що потребують взаємодії з терміналом,
 // а також обробляє спеціальні команди, такі як `help`, `restart`, та `exit`.
-func (r *Reader) ReadMessageCommand(logAddress string, wSocket *websocket.Conn) {
+func (r *Reader) ReadMessageCommand(logStatus bool, logAddress string, wSocket *websocket.Conn) {
 	term := terminal.NewTerminalManager()
 	if err := term.Start(); err != nil {
-		logging.Now().PrintLog(logAddress, "Failed to start terminal: ", err.Error())
+		if logStatus == true {
+			logging.Now().PrintLog(logAddress, "Failed to start terminal: ", err.Error())
+		}
 	} else {
-		Terminal(logAddress, wSocket, term)
+		Terminal(logStatus, logAddress, wSocket, term)
 	}
 
 	for {
 		_, message, err := wSocket.ReadMessage()
 		if err != nil {
-			logging.Now().PrintLog(logAddress, "Error reading message: ", err.Error())
+			if logStatus == true {
+				logging.Now().PrintLog(logAddress, "Error reading message: ", err.Error())
+			}
 			return
 		}
 
 		if err := json.Unmarshal(message, &cmd); err != nil {
 			// Якщо розпарсити як JSON не вдалося, обробляємо як звичайний текст
-			logging.Now().PrintLog(logAddress, "Received text message:", string(message))
+			if logStatus == true {
+				logging.Now().PrintLog(logAddress, "Received text message:", string(message))
+			}
 		} else {
 			// Якщо розпарсити вдалося, працюємо з даними
 			if cmd.Command == "help" {
@@ -90,12 +94,16 @@ func (r *Reader) ReadMessageCommand(logAddress string, wSocket *websocket.Conn) 
 				// Серіалізація в JSON
 				jsonData, err := json.Marshal(msg)
 				if err != nil {
-					logging.Now().PrintLog(logAddress, "Error marshalling JSON:", err.Error())
+					if logStatus == true {
+						logging.Now().PrintLog(logAddress, "Error marshalling JSON:", err.Error())
+					}
 					continue
 				}
-				log.Println("Json " + string(jsonData))
+				//log.Println("Json " + string(jsonData))
 				if err := NewSender().sendMessageWith(logAddress, wSocket, jsonData); err != nil {
-					logging.Now().PrintLog(logAddress, "Error sending message:", err.Error())
+					if logStatus == true {
+						logging.Now().PrintLog(logAddress, "Error sending message:", err.Error())
+					}
 				}
 			} else {
 				// Основний TerminalManager() для взаємодії з користувачем терміналом
@@ -103,10 +111,12 @@ func (r *Reader) ReadMessageCommand(logAddress string, wSocket *websocket.Conn) 
 					term.Stop()
 					managerTerm := terminal.NewTerminalManager()
 					if err := managerTerm.Start(); err != nil {
-						logging.Now().PrintLog(logAddress, "Failed to start terminal: %v", err.Error())
+						if logStatus == true {
+							logging.Now().PrintLog(logAddress, "Failed to start terminal: %v", err.Error())
+						}
 					} else {
 						term = managerTerm
-						Terminal(logAddress, wSocket, term)
+						Terminal(logStatus, logAddress, wSocket, term)
 					}
 					continue
 				}
@@ -125,7 +135,7 @@ func (r *Reader) ReadMessageCommand(logAddress string, wSocket *websocket.Conn) 
 // Опис:
 // Функція запускає горутину, яка читає вихідні дані з термінала і відправляє їх через WebSocket.
 // горутина буде працювати доти, доки є активний термінал, що видає вихідні дані, або доки не буде закрито саму програму.
-func Terminal(logAddress string, wSocket *websocket.Conn, term *terminal.TerminalManager) {
+func Terminal(logStatus bool, logAddress string, wSocket *websocket.Conn, term *terminal.TerminalManager) {
 	go func() {
 		for line := range term.GetOutput() {
 			msg := myMessage{
@@ -135,12 +145,18 @@ func Terminal(logAddress string, wSocket *websocket.Conn, term *terminal.Termina
 			}
 			jsonData, err := json.Marshal(msg)
 			if err != nil {
-				logging.Now().PrintLog(logAddress, "Error marshalling JSON:", err.Error())
+				if logStatus == true {
+					logging.Now().PrintLog(logAddress, "Error marshalling JSON:", err.Error())
+				}
 				continue
 			}
-			logging.Now().PrintLog(logAddress, "Json ", string(jsonData))
+			if logStatus == true {
+				logging.Now().PrintLog(logAddress, "Json ", string(jsonData))
+			}
 			if err := NewSender().sendMessageWith(logAddress, wSocket, jsonData); err != nil {
-				logging.Now().PrintLog(logAddress, "Error sending message:", err.Error())
+				if logStatus == true {
+					logging.Now().PrintLog(logAddress, "Error sending message:", err.Error())
+				}
 			}
 		}
 	}()
