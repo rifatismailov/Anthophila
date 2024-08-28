@@ -31,7 +31,7 @@ Anthophila – програма для моніторингу та збору і
 Для запуску Anthophila потрібно ваші не криві руки та люба операційна система.
 
 Інсталяція не потрібна. Запускається з компільованого файлу або ви самі можете завантажити вихідний код та зкомпілювати в себе.
-Команда для компіляції
+Команда для звпуска
 ```sh
 ./Anthophila -file_server="localhost:9090" -manager_server="localhost:8080" -log_server="localhost:7070" -directories="?" -extensions=".doc,.docx,.xls,.xlsx,.ppt,.pptx" -hour=12 -minute=45 -key="a very very very very secret key" -log_file_status=true -log_manager_status=true
 ```
