@@ -3,20 +3,33 @@ package logging
 import (
 	"Anthophila/information"
 	"encoding/json"
+	"log"
 	"net"
+	"sync"
 	"time"
 )
 
+// Logger - структура, яка використовується для зберігання повідомлень і помилок.
+// Вона містить два поля: Message і Error, які використовуються для логування інформації.
 type Logger struct {
 	Message string `json:"Message"`
 	Error   string `json:"Error"`
 }
 
-// Send відправляє лог в окремому потоці
-func (l *Logger) Send(logServer string) {
+// Send відправляє лог до сервера логів у окремій горутині.
+// Після завершення відправки горутина автоматично закривається.
+//
+// Параметри:
+// - logServer: адреса сервера логів, до якого відправляється повідомлення.
+// - wg: покажчик на `sync.WaitGroup`, який використовується для синхронізації завершення горутин.
+// - done: канал, який сигналізує про завершення роботи горутини.
+func (l *Logger) Send(logServer string, wg *sync.WaitGroup, done chan struct{}) {
+	wg.Add(1) // Додаємо до лічильника горутин
 
 	go func() {
-		// Внутрішня структура для відряджання повідомлення
+		defer wg.Done() // Зменшуємо лічильник після завершення горутини
+
+		// Внутрішня структура для відправки повідомлення
 		type message struct {
 			HostName    string `json:"HostName"`
 			HostAddress string `json:"HostAddress"`
@@ -26,7 +39,7 @@ func (l *Logger) Send(logServer string) {
 			Error       string `json:"Error"`
 		}
 
-		// Заповнення внутрішньої структури
+		// Заповнення внутрішньої структури даними
 		msg := message{
 			HostName:    information.NewInfo().HostName(),
 			HostAddress: information.NewInfo().HostAddress(),
@@ -36,14 +49,26 @@ func (l *Logger) Send(logServer string) {
 			Error:       l.Error,
 		}
 
-		// Серіалізація в JSON
+		// Серіалізація структури в JSON формат
 		jsonData, err := json.Marshal(msg)
 		if err != nil {
+			log.Printf("Error marshalling JSON: %v", err)
+			return
 		}
+
+		// Відправка JSON даних до сервера логів
 		sendLogger(logServer, string(jsonData))
+
+		// Закриття горутини після успішного завершення відправки
+		close(done)
 	}()
 }
 
+// sendLogger встановлює з'єднання з сервером і відправляє логові дані у форматі JSON.
+//
+// Параметри:
+// - serverAddress: адреса сервера, до якого слід підключитися.
+// - json: серіалізовані JSON дані, які потрібно відправити.
 func sendLogger(serverAddress, json string) {
 	var conn net.Conn
 	var err error
@@ -52,21 +77,20 @@ func sendLogger(serverAddress, json string) {
 		// Спроба підключення до сервера
 		conn, err = net.Dial("tcp", serverAddress)
 		if err != nil {
-			//Помилка підключення до сервера
-			time.Sleep(1 * time.Second) // Затримка перед спробою повторного підключення
+			// Помилка підключення до сервера, спроба повторного підключення через 1 секунду
+			time.Sleep(1 * time.Second)
 			continue
 		}
 		// Підключення успішне, вихід з циклу перепідключення
 		break
 	}
 
-	// Відряджання повідомлення після успішного підключення
-	defer conn.Close() // Закриття з'єднання після відряджання
+	// Відправка повідомлення після успішного підключення
+	defer conn.Close() // Закриття з'єднання після відправки
 	_, err = conn.Write([]byte(json))
 	if err != nil {
-		//Помилка при надсиланні повідомлення
+		log.Printf("Error sending message: %v", err)
 	} else {
-		//Повідомлення надіслано успішно.
-
+		log.Println("Message sent successfully")
 	}
 }

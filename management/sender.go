@@ -1,8 +1,8 @@
 package management
 
 import (
+	"Anthophila/logging"
 	"github.com/gorilla/websocket"
-	"log"
 )
 
 type Sender struct{}
@@ -14,7 +14,7 @@ func NewSender() *Sender {
 func (*Sender) sendMessageWith(wSocket *websocket.Conn, text []byte) error {
 	err := wSocket.WriteMessage(websocket.TextMessage, text)
 	if err != nil {
-		log.Println("Error sending message:", err)
+		logging.Now().PrintLog("Error sending message:", err.Error())
 		return err
 	}
 	return err
