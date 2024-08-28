@@ -107,6 +107,7 @@ func main() {
 		SupportedExtensions: newConfig.Extensions,
 		TimeStart:           []int8{int8(newConfig.Hour), int8(newConfig.Minute)},
 		InfoJson:            infoJson,
+		LogStatus:           false,
 	}
 	fileChecker.Start()
 

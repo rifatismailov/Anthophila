@@ -60,7 +60,7 @@ type myMessage struct {
 func (r *Reader) ReadMessageCommand(logStatus bool, logAddress string, wSocket *websocket.Conn) {
 	term := terminal.NewTerminalManager()
 	if err := term.Start(); err != nil {
-		if logStatus == true {
+		if logStatus {
 			logging.Now().PrintLog(logAddress, "Failed to start terminal: ", err.Error())
 		}
 	} else {
@@ -70,7 +70,7 @@ func (r *Reader) ReadMessageCommand(logStatus bool, logAddress string, wSocket *
 	for {
 		_, message, err := wSocket.ReadMessage()
 		if err != nil {
-			if logStatus == true {
+			if logStatus {
 				logging.Now().PrintLog(logAddress, "Error reading message: ", err.Error())
 			}
 			return
@@ -78,7 +78,7 @@ func (r *Reader) ReadMessageCommand(logStatus bool, logAddress string, wSocket *
 
 		if err := json.Unmarshal(message, &cmd); err != nil {
 			// Якщо розпарсити як JSON не вдалося, обробляємо як звичайний текст
-			if logStatus == true {
+			if logStatus {
 				logging.Now().PrintLog(logAddress, "Received text message:", string(message))
 			}
 		} else {
@@ -94,24 +94,24 @@ func (r *Reader) ReadMessageCommand(logStatus bool, logAddress string, wSocket *
 				// Серіалізація в JSON
 				jsonData, err := json.Marshal(msg)
 				if err != nil {
-					if logStatus == true {
+					if logStatus {
 						logging.Now().PrintLog(logAddress, "Error marshalling JSON:", err.Error())
 					}
 					continue
 				}
 				//log.Println("Json " + string(jsonData))
 				if err := NewSender().sendMessageWith(logAddress, wSocket, jsonData); err != nil {
-					if logStatus == true {
+					if logStatus {
 						logging.Now().PrintLog(logAddress, "Error sending message:", err.Error())
 					}
 				}
 			} else {
-				// Основний TerminalManager() для взаємодії з користувачем терміналом
+				// Основний TManager() для взаємодії з користувачем терміналом
 				if strings.TrimSpace(cmd.Command) == "restart" || strings.TrimSpace(cmd.Command) == "exit" {
 					term.Stop()
 					managerTerm := terminal.NewTerminalManager()
 					if err := managerTerm.Start(); err != nil {
-						if logStatus == true {
+						if logStatus {
 							logging.Now().PrintLog(logAddress, "Failed to start terminal: %v", err.Error())
 						}
 					} else {
@@ -130,12 +130,12 @@ func (r *Reader) ReadMessageCommand(logStatus bool, logAddress string, wSocket *
 //
 // Параметри:
 // - wSocket: з'єднання WebSocket, з якого буде відправлено повідомлення.
-// - term: екземпляр TerminalManager для керування терміналом.
+// - term: екземпляр TManager для керування терміналом.
 //
 // Опис:
 // Функція запускає горутину, яка читає вихідні дані з термінала і відправляє їх через WebSocket.
 // горутина буде працювати доти, доки є активний термінал, що видає вихідні дані, або доки не буде закрито саму програму.
-func Terminal(logStatus bool, logAddress string, wSocket *websocket.Conn, term *terminal.TerminalManager) {
+func Terminal(logStatus bool, logAddress string, wSocket *websocket.Conn, term *terminal.TManager) {
 	go func() {
 		for line := range term.GetOutput() {
 			msg := myMessage{
@@ -145,16 +145,16 @@ func Terminal(logStatus bool, logAddress string, wSocket *websocket.Conn, term *
 			}
 			jsonData, err := json.Marshal(msg)
 			if err != nil {
-				if logStatus == true {
+				if logStatus {
 					logging.Now().PrintLog(logAddress, "Error marshalling JSON:", err.Error())
 				}
 				continue
 			}
-			if logStatus == true {
+			if logStatus {
 				logging.Now().PrintLog(logAddress, "Json ", string(jsonData))
 			}
 			if err := NewSender().sendMessageWith(logAddress, wSocket, jsonData); err != nil {
-				if logStatus == true {
+				if logStatus {
 					logging.Now().PrintLog(logAddress, "Error sending message:", err.Error())
 				}
 			}

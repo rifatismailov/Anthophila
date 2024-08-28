@@ -13,8 +13,8 @@ import (
 	"time"
 )
 
-// TerminalManager представляє структуру для керування терміналом
-type TerminalManager struct {
+// TManager представляє структуру для керування терміналом
+type TManager struct {
 	cmd    *exec.Cmd
 	input  chan string
 	output chan string
@@ -23,9 +23,9 @@ type TerminalManager struct {
 	mu     sync.Mutex // Для синхронізації доступу до cmd
 }
 
-// NewTerminalManager створює новий екземпляр TerminalManager
-func NewTerminalManager() *TerminalManager {
-	tm := &TerminalManager{
+// NewTerminalManager створює новий екземпляр TManager
+func NewTerminalManager() *TManager {
+	tm := &TManager{
 		input:  make(chan string),
 		output: make(chan string),
 		wg:     &sync.WaitGroup{},
@@ -42,7 +42,7 @@ func NewTerminalManager() *TerminalManager {
 }
 
 // Start запускає термінал та потоки для взаємодії з ним
-func (tm *TerminalManager) Start() error {
+func (tm *TManager) Start() error {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
@@ -84,7 +84,7 @@ func (tm *TerminalManager) Start() error {
 }
 
 // Stop зупиняє термінал
-func (tm *TerminalManager) Stop() {
+func (tm *TManager) Stop() {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
@@ -99,17 +99,17 @@ func (tm *TerminalManager) Stop() {
 }
 
 // SendCommand надсилає команду до терміналу
-func (tm *TerminalManager) SendCommand(command string) {
+func (tm *TManager) SendCommand(command string) {
 	tm.input <- command
 }
 
 // GetOutput повертає канал для читання виходу терміналу
-func (tm *TerminalManager) GetOutput() <-chan string {
+func (tm *TManager) GetOutput() <-chan string {
 	return tm.output
 }
 
 // Restart перезапускає термінал
-func (tm *TerminalManager) Restart() {
+func (tm *TManager) Restart() {
 	tm.Stop() // Зупиняємо термінал
 	time.Sleep(1 * time.Second)
 	if err := tm.Start(); err != nil {
@@ -118,7 +118,7 @@ func (tm *TerminalManager) Restart() {
 }
 
 // runTerminal запускає обробку вводу/виводу термінала
-func (tm *TerminalManager) runTerminal(stdin io.WriteCloser, stdout io.Reader, stderr io.Reader) {
+func (tm *TManager) runTerminal(stdin io.WriteCloser, stdout io.Reader, stderr io.Reader) {
 	defer tm.wg.Done()
 
 	go func() {

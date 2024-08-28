@@ -16,6 +16,7 @@ type Checker struct {
 	Directories         []string
 	SupportedExtensions []string
 	InfoJson            string
+	LogStatus           bool
 }
 
 // CheckFile - метод для перевірки файлів у зазначених директоріях.
@@ -24,7 +25,9 @@ func (c *Checker) CheckFile() {
 	// Завантажуємо список помилок
 	errorPaths, err := logging.LoadErrorPaths()
 	if err != nil {
-		logging.Now().PrintLog(c.LogAddress, "[CheckFile] Помилка завантаження списку помилок", err.Error())
+		if c.LogStatus {
+			logging.Now().PrintLog(c.LogAddress, "[CheckFile] Помилка завантаження списку помилок", err.Error())
+		}
 		return
 	}
 
@@ -37,9 +40,11 @@ func (c *Checker) CheckFile() {
 
 		err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				logging.Now().PrintLog(c.LogAddress,
-					"[CheckFile] Помилка доступу до шляху",
-					"{Path :{"+path+"} Err :{"+err.Error()+"}}")
+				if c.LogStatus {
+					logging.Now().PrintLog(c.LogAddress,
+						"[CheckFile] Помилка доступу до шляху",
+						"{Path :{"+path+"} Err :{"+err.Error()+"}}")
+				}
 
 				logging.AddErrorPath(path, err.Error(), errorPaths)
 				logging.SaveErrorPaths(errorPaths) // Зберігаємо оновлений список помилок
@@ -51,29 +56,31 @@ func (c *Checker) CheckFile() {
 			if !info.IsDir() && isSupportedFileType(path, c.SupportedExtensions) {
 				changed, errorFileInfo := NewFileInfo().CheckAndWriteHash(path, "hashes.json")
 				if errorFileInfo != nil {
-					logging.Now().PrintLog(c.LogAddress,
-						"[CheckFile] Помилка під час перевірки підтримування тип файлу", path)
+					if c.LogStatus {
+						logging.Now().PrintLog(c.LogAddress,
+							"[CheckFile] Помилка під час перевірки підтримування тип файлу", path)
+					}
 				} else if changed {
 					// Хеш файлу змінився
-					sendfile.NewFILESender().SenderFile(c.FileAddress, c.LogAddress, path, c.Key, c.InfoJson)
+					sendfile.NewFILESender().SenderFile(c.LogStatus, c.FileAddress, c.LogAddress, path, c.Key, c.InfoJson)
 				}
 			}
 			return nil
 		})
 
 		if err != nil {
-			logging.Now().PrintLog(c.LogAddress,
-				"[CheckFile] Помилка обходу шляху",
-				"{Dir :{"+dir+"} Err :{"+err.Error()+"}}")
+			if c.LogStatus {
+				logging.Now().PrintLog(c.LogAddress,
+					"[CheckFile] Помилка обходу шляху",
+					"{Dir :{"+dir+"} Err :{"+err.Error()+"}}")
+			}
 		}
 	}
 
 }
 
-/*
-*	Функція isSupportedFileType:
-*	Перевіряє, чи підтримується тип файлу. Повертає true, якщо розширення файлу є одним з підтримуваних
- */
+// Функція isSupportedFileType:
+// Перевіряє, чи підтримується тип файлу. Повертає true, якщо розширення файлу є одним з підтримуваних
 func isSupportedFileType(file string, supportedExtensions []string) bool {
 	// Перевіряємо, чи файл має одне з підтримуваних розширень
 	for _, ext := range supportedExtensions {

@@ -29,7 +29,7 @@ func (f *Manager) Start(logStatus bool, logAddress, serverAddr string) {
 		wSocket, _, err = websocket.DefaultDialer.Dial(serverAddr, nil)
 		if err != nil {
 			// Логування помилки підключення
-			if logStatus == true {
+			if logStatus {
 				logging.Now().PrintLog(logAddress, "Error connecting to server: %v", err.Error())
 				logging.Now().PrintLog(logAddress, "Retrying in %v...", reconnectInterval.String())
 			}
@@ -42,11 +42,11 @@ func (f *Manager) Start(logStatus bool, logAddress, serverAddr string) {
 		err = wSocket.WriteMessage(websocket.TextMessage, []byte("nick:"+macAddress))
 		if err != nil {
 			// Логування помилки відправки нікнейму
-			if logStatus == true {
+			if logStatus {
 				logging.Now().PrintLog(logAddress, "Error sending nickname: %v", err.Error())
 			}
 			wSocket.Close()
-			if logStatus == true {
+			if logStatus {
 				logging.Now().PrintLog(logAddress, "Retrying in %v...", reconnectInterval.String())
 			}
 			// Затримка перед наступною спробою підключення
@@ -67,7 +67,7 @@ func (f *Manager) Start(logStatus bool, logAddress, serverAddr string) {
 
 			if errPing != nil {
 				// Логування помилки при надсиланні пінгу
-				if logStatus == true {
+				if logStatus {
 					logging.Now().PrintLog(logAddress, "Error writing to server: %v", errPing.Error())
 				}
 				// Вихід з циклу при помилці
@@ -76,7 +76,7 @@ func (f *Manager) Start(logStatus bool, logAddress, serverAddr string) {
 		}
 
 		// Якщо ми потрапили сюди, це означає, що з'єднання було розірвано
-		if logStatus == true {
+		if logStatus {
 			logging.Now().PrintLog(logAddress, "Connection closed. Retrying in %v...", reconnectInterval.String())
 		}
 		wSocket.Close()
