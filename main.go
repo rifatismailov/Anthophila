@@ -16,10 +16,10 @@ import (
 // ./your_program -file_server="localhost:9090" -manager_server="localhost:8080" -log_server="localhost:7070" -directories="?" -extensions=".doc,.docx,.xls,.xlsx,.ppt,.pptx" -hour=12 -minute=45 -key="a very very very very secret key"
 
 var (
-	fileServer    = flag.String("file_server", "localhost:8080", "File Server address")
+	fileServer    = flag.String("file_server", "localhost:9090", "File Server address")
 	managerServer = flag.String("manager_server", "localhost:8080", "Manager Server address")
-	logServer     = flag.String("log_server", "localhost:8080", "Log Server address")
-	directories   = flag.String("directories", "/Users/sirius/GolandProjects/Anthophila/doc,/Users/sirius/GolandProjects/Anthophila/file", "Comma-separated list of directories")
+	logServer     = flag.String("log_server", "localhost:7070", "Log Server address")
+	directories   = flag.String("directories", "", "Comma-separated list of directories")
 	extensions    = flag.String("extensions", ".doc,.docx,.xls,.xlsx,.ppt,.pptx", "Comma-separated list of extensions")
 	hour          = flag.Int("hour", 12, "Hour")
 	minute        = flag.Int("minute", 30, "Minute")
