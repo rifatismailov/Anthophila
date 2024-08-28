@@ -89,8 +89,8 @@ func sendLogger(serverAddress, json string) {
 	defer conn.Close() // Закриття з'єднання після відправки
 	_, err = conn.Write([]byte(json))
 	if err != nil {
-		log.Printf("Error sending message: %v", err)
+		//log.Printf("Error sending message: %v", err)
 	} else {
-		log.Println("Message sent successfully")
+		//log.Println("Message sent successfully")
 	}
 }

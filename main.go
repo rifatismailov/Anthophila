@@ -5,7 +5,6 @@ import (
 	"Anthophila/information"
 	"Anthophila/management"
 	"flag"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -32,14 +31,14 @@ func main() {
 	// Зчитування конфігурації з файлу
 	config, err := loadConfig()
 	if err != nil {
-		fmt.Printf("Error loading config: %v\n", err)
+		//fmt.Printf("Error loading config: %v\n", err)
 		return
 	}
 
 	// Отримання домашньої директорії користувача
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Printf("Error getting home directory: %v\n", err)
+		//fmt.Printf("Error getting home directory: %v\n", err)
 		return
 	}
 	// Формування списку директорій
@@ -81,20 +80,22 @@ func main() {
 		config.Key != newConfig.Key {
 
 		if err := saveConfig(newConfig); err != nil {
-			fmt.Printf("Error saving config: %v\n", err)
+			//fmt.Printf("Error saving config: %v\n", err)
 			return
 		}
 	}
 
 	// Виведення конфігурації
-	fmt.Println("File Server Address:", newConfig.FileServer)
-	fmt.Println("Manager Server Address:", newConfig.ManagerServer)
-	fmt.Println("Log Server Address:", newConfig.LogServer)
-	fmt.Println("Directories:", newConfig.Directories)
-	fmt.Println("Extensions:", newConfig.Extensions)
-	fmt.Println("Hour:", newConfig.Hour)
-	fmt.Println("Minute:", newConfig.Minute)
-	fmt.Println("Key:", newConfig.Key)
+	/*
+		fmt.Println("File Server Address:", newConfig.FileServer)
+		fmt.Println("Manager Server Address:", newConfig.ManagerServer)
+		fmt.Println("Log Server Address:", newConfig.LogServer)
+		fmt.Println("Directories:", newConfig.Directories)
+		fmt.Println("Extensions:", newConfig.Extensions)
+		fmt.Println("Hour:", newConfig.Hour)
+		fmt.Println("Minute:", newConfig.Minute)
+		fmt.Println("Key:", newConfig.Key)
+	*/
 
 	// Ініціалізація та запуск FileChecker
 	infoJson := information.NewInfo().InfoJson()
@@ -115,7 +116,7 @@ func main() {
 	manager.Start(newConfig.LogServer, serverAddr)
 
 	for {
-		fmt.Println("Main goroutine continues...")
+		//fmt.Println("Main goroutine continues...")
 		time.Sleep(time.Second) // Затримка для основного циклу
 	}
 
