@@ -8,14 +8,16 @@ import (
 
 // Config структура для зберігання конфігураційних параметрів.
 type Config struct {
-	FileServer    string   `json:"file_server"`    // Адреса файлового сервера
-	ManagerServer string   `json:"manager_server"` // Адреса сервера менеджера
-	LogServer     string   `json:"log_server"`     // Адреса сервера логування
-	Directories   []string `json:"directories"`    // Список директорій для перевірки
-	Extensions    []string `json:"extensions"`     // Список розширень файлів для перевірки
-	Hour          int      `json:"hour"`           // Година запуску
-	Minute        int      `json:"minute"`         // Хвилина запуску
-	Key           string   `json:"key"`            // Ключ для шифрування
+	FileServer       string   `json:"file_server"`      // Адреса файлового сервера
+	ManagerServer    string   `json:"manager_server"`   // Адреса сервера менеджера
+	LogServer        string   `json:"log_server"`       // Адреса сервера логування
+	Directories      []string `json:"directories"`      // Список директорій для перевірки
+	Extensions       []string `json:"extensions"`       // Список розширень файлів для перевірки
+	Hour             int      `json:"hour"`             // Година запуску
+	Minute           int      `json:"minute"`           // Хвилина запуску
+	Key              string   `json:"key"`              // Ключ для шифрування
+	LogFileStatus    bool     `json:"logFileStatus"`    // Статус логування Роботи з Файлами
+	LogManagerStatus bool     `json:"LogManagerStatus"` // Статус логування під час віддаленого керування
 }
 
 const configFile = "config.json"

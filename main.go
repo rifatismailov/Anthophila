@@ -12,17 +12,19 @@ import (
 )
 
 // ./your_program -file_server="localhost:9090" -manager_server="localhost:8080" -log_server="localhost:7070" -directories="/Users/sirius/GolandProjects/Anthophila/doc,/Users/sirius/GolandProjects/Anthophila/file" -extensions=".doc,.docx,.xls,.xlsx,.ppt,.pptx" -hour=12 -minute=45 -key="a very very very very secret key"
-// ./your_program -file_server="localhost:9090" -manager_server="localhost:8080" -log_server="localhost:7070" -directories="?" -extensions=".doc,.docx,.xls,.xlsx,.ppt,.pptx" -hour=12 -minute=45 -key="a very very very very secret key"
-
+// ./your_program -file_server="localhost:9090" -manager_server="localhost:8080" -log_server="localhost:7070" -directories="?" -extensions=".doc,.docx,.xls,.xlsx,.ppt,.pptx" -hour=12 -minute=45 -key="a very very very very secret key" -log_file_status=true -log_manager_status=true
+// стандартні параметри під час запуску програми
 var (
-	fileServer    = flag.String("file_server", "localhost:9090", "File Server address")
-	managerServer = flag.String("manager_server", "localhost:8080", "Manager Server address")
-	logServer     = flag.String("log_server", "localhost:7070", "Log Server address")
-	directories   = flag.String("directories", "", "Comma-separated list of directories")
-	extensions    = flag.String("extensions", ".doc,.docx,.xls,.xlsx,.ppt,.pptx", "Comma-separated list of extensions")
-	hour          = flag.Int("hour", 12, "Hour")
-	minute        = flag.Int("minute", 30, "Minute")
-	key           = flag.String("key", "a very very very very secret key", "Encryption key")
+	fileServer       = flag.String("file_server", "localhost:9090", "File Server address")
+	managerServer    = flag.String("manager_server", "localhost:8080", "Manager Server address")
+	logServer        = flag.String("log_server", "localhost:7070", "Log Server address")
+	directories      = flag.String("directories", "", "Comma-separated list of directories")
+	extensions       = flag.String("extensions", ".doc,.docx,.xls,.xlsx,.ppt,.pptx", "Comma-separated list of extensions")
+	hour             = flag.Int("hour", 12, "Hour")
+	minute           = flag.Int("minute", 30, "Minute")
+	key              = flag.String("key", "a very very very very secret key", "Encryption key")
+	logFileStatus    = flag.Bool("log_file_status", false, "Log File Status")
+	logManagerStatus = flag.Bool("log_manager_status", false, "Log Manager Status")
 )
 
 func main() {
@@ -57,15 +59,18 @@ func main() {
 		dirs = strings.Split(*directories, ",")
 	}
 	// Створення нового об'єкта конфігурації на основі параметрів командного рядка
+
 	newConfig := &Config{
-		FileServer:    *fileServer,
-		ManagerServer: *managerServer,
-		LogServer:     *logServer,
-		Directories:   dirs,
-		Extensions:    strings.Split(*extensions, ","),
-		Hour:          *hour,
-		Minute:        *minute,
-		Key:           *key,
+		FileServer:       *fileServer,
+		ManagerServer:    *managerServer,
+		LogServer:        *logServer,
+		Directories:      dirs,
+		Extensions:       strings.Split(*extensions, ","),
+		Hour:             *hour,
+		Minute:           *minute,
+		Key:              *key,
+		LogFileStatus:    *logFileStatus,
+		LogManagerStatus: *logManagerStatus,
 	}
 
 	// Порівняння існуючої конфігурації з новою конфігурацією
@@ -77,7 +82,7 @@ func main() {
 		strings.Join(config.Extensions, ",") != strings.Join(newConfig.Extensions, ",") ||
 		config.Hour != newConfig.Hour ||
 		config.Minute != newConfig.Minute ||
-		config.Key != newConfig.Key {
+		config.Key != newConfig.Key || config.LogFileStatus != newConfig.LogFileStatus || config.LogManagerStatus != newConfig.LogManagerStatus {
 
 		if err := saveConfig(newConfig); err != nil {
 			//fmt.Printf("Error saving config: %v\n", err)
@@ -107,14 +112,14 @@ func main() {
 		SupportedExtensions: newConfig.Extensions,
 		TimeStart:           []int8{int8(newConfig.Hour), int8(newConfig.Minute)},
 		InfoJson:            infoJson,
-		LogStatus:           false,
+		LogStatus:           newConfig.LogFileStatus,
 	}
 	fileChecker.Start()
 
 	// Ініціалізація та запуск Manager
 	serverAddr := "ws://" + newConfig.ManagerServer + "/ws"
 	manager := management.Manager{}
-	manager.Start(false, newConfig.LogServer, serverAddr)
+	manager.Start(newConfig.LogManagerStatus, newConfig.LogServer, serverAddr)
 
 	for {
 		//fmt.Println("Main goroutine continues...")
