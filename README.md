@@ -41,7 +41,7 @@ Anthophila – програма для моніторингу та збору і
 ```sh
 1. Правильно вказати все три сервера (Файл сервер, Лог сервер та сервер керування)
 2. Правильні діректорії які вам треба сканувати. Приклад :
-   [Вона може бути виглядати так -directories= "/Users/username/Desktop/,/Users/username/Documents/, /Users/username/Downloads/"
+   [Вона може бути виглядати так -directories= "/Users/username/Desktop/,/Users/username/Documents/, /Users/username/Downloads/". Якщо ви не знаєте які саме діректорії треба вам сканувати може залишити поле пустим або встановити знак питання -directories="?"
 3. Типи файлів у такому вигляді -extensions=".doc,.docx,.xls,.xlsx,.ppt,.pptx"
 4. Час коли программа починає сканування -hour=12 -minute=45
 5. Ключ шифрування -key="a very very very very secret key"
