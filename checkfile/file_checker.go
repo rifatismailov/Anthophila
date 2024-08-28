@@ -41,7 +41,8 @@ import (
 )
 
 type FileChecker struct {
-	Address             string
+	FileAddress         string
+	LogAddress          string
 	Key                 []byte
 	Directories         []string
 	SupportedExtensions []string
@@ -54,7 +55,7 @@ func (fc *FileChecker) Start() {
 	minute := fc.TimeStart[1]
 	fmt.Println("Hour:", hour, "Minute:", minute)
 	//вставити функцію яка буде робити затримку до окремого часу
-	checker := Checker{fc.Address, fc.Key, fc.Directories, fc.SupportedExtensions, fc.InfoJson}
+	checker := Checker{fc.FileAddress, fc.LogAddress, fc.Key, fc.Directories, fc.SupportedExtensions, fc.InfoJson}
 	go func() {
 		for {
 			time.Sleep(5 * time.Second)

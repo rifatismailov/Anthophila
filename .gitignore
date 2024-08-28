@@ -3,3 +3,6 @@
 /bash/sudo_expect.sh
 /doc/
 /bash/
+/config.json
+/hashes.json
+/error_paths.json

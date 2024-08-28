@@ -28,11 +28,11 @@ func Now() *PrintLog {
 // 3. Створює екземпляр `Logger` з переданим повідомленням та помилкою.
 // 4. Викликає метод `Send`, який запускає горутину для відправки даних до сервера логів.
 // 5. Використовує `wg.Wait()` для очікування завершення горутини.
-func (p PrintLog) PrintLog(message string, err string) {
+func (p PrintLog) PrintLog(LogAddress string, message string, err string) {
 	var wg sync.WaitGroup
 	done := make(chan struct{})
 	logger := Logger{Message: message, Error: err}
-	logger.Send("localhost:6606", &wg, done)
+	logger.Send(LogAddress, &wg, done)
 
 	// Очікуємо завершення горутин
 	wg.Wait()

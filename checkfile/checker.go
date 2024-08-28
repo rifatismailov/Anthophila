@@ -10,7 +10,8 @@ import (
 
 // Checker - структура, що містить дані для перевірки файлів.
 type Checker struct {
-	Address             string
+	FileAddress         string
+	LogAddress          string
 	Key                 []byte
 	Directories         []string
 	SupportedExtensions []string
@@ -20,38 +21,53 @@ type Checker struct {
 // CheckFile - метод для перевірки файлів у зазначених директоріях.
 func (c *Checker) CheckFile() {
 
+	// Завантажуємо список помилок
+	errorPaths, err := logging.LoadErrorPaths()
+	if err != nil {
+		logging.Now().PrintLog(c.LogAddress, "[CheckFile] Помилка завантаження списку помилок", err.Error())
+		return
+	}
+
 	// Проходження по всіх вказаних директоріях
 	for _, dir := range c.Directories {
+		if logging.IsPathInErrorList(dir, errorPaths) {
+			//[CheckFile] Пропуск шляху з попередньою помилкою доступу"
+			continue
+		}
+
 		err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				logging.Now().PrintLog(
+				logging.Now().PrintLog(c.LogAddress,
 					"[CheckFile] Помилка доступу до шляху",
 					"{Path :{"+path+"} Err :{"+err.Error()+"}}")
+
+				logging.AddErrorPath(path, err.Error(), errorPaths)
+				logging.SaveErrorPaths(errorPaths) // Зберігаємо оновлений список помилок
+
 				return nil
 			}
-			//Перевіряє, чи підтримується тип файлу
+
+			// Перевіряє, чи підтримується тип файлу
 			if !info.IsDir() && isSupportedFileType(path, c.SupportedExtensions) {
 				changed, errorFileInfo := NewFileInfo().CheckAndWriteHash(path, "hashes.json")
 				if errorFileInfo != nil {
-					logging.Now().PrintLog(
+					logging.Now().PrintLog(c.LogAddress,
 						"[CheckFile] Помилка під час перевірки підтримування тип файлу", path)
 				} else if changed {
-					//Хеш файлу змінився
-					sendfile.NewFILESender().SenderFile(c.Address, path, c.Key, c.InfoJson)
-				} else {
-					//fmt.Println("Перевірка пошук та відряджання нових і змінних файлі...")
+					// Хеш файлу змінився
+					sendfile.NewFILESender().SenderFile(c.FileAddress, c.LogAddress, path, c.Key, c.InfoJson)
 				}
-
 			}
 			return nil
 		})
 
 		if err != nil {
-			logging.Now().PrintLog(
+			logging.Now().PrintLog(c.LogAddress,
 				"[CheckFile] Помилка обходу шляху",
 				"{Dir :{"+dir+"} Err :{"+err.Error()+"}}")
 		}
 	}
+
 }
 
 /*
