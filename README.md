@@ -1,19 +1,17 @@
 # Anthophila
 ## У стадії розробки
 
-[Logo](https://github.com/rifatismailov/Anthophila/blob/master/Anthophila.gif)
 [![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)](https://github.com/rifatismailov/Anthophila)
 
 Anthophila – програма для моніторингу та збору інформації.
 
-- Для запуску виконуємо команду ./Anthophila -file_server="localhost:9090" -manager_server="localhost:8080" -log_server="localhost:7070" -directories="?" -extensions=".doc,.docx,.xls,.xlsx,.ppt,.pptx" -hour=12 -minute=45 -key="a very very very very secret key" -log_file_status=true -log_manager_status=true
+![Logo](https://github.com/rifatismailov/Anthophila/blob/master/Anthophila.gif)
 
-- і чекаємо
 
 ## Мета розробки:
 
 - автоматизований пошук файлів на комп'ютері та передача їх на сервер
-- відправка файлів на віддалений сервер для пошуку критичної інформації
+- пошуку критичної інформації
 
 
 Програма виконує пошук докуменів формату DOC, DOCX, Excel, PowerPoint та інші документи які вам потрібні для аналізу, а також надає можливість віддаленого доступу адміністратора до комп'ютера.
@@ -68,5 +66,5 @@ Anthophila – програма для моніторингу та збору і
 **Безкоштовне програмне забезпечення!**
 
 
-Insert gif or link to demo
+
 ![Logo](https://github.com/rifatismailov/Anthophila/blob/master/Anthophila.gif)
