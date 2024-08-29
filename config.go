@@ -18,6 +18,7 @@ type Config struct {
 	Key              string   `json:"key"`              // Ключ для шифрування
 	LogFileStatus    bool     `json:"logFileStatus"`    // Статус логування Роботи з Файлами
 	LogManagerStatus bool     `json:"LogManagerStatus"` // Статус логування під час віддаленого керування
+	ManagerEnabled   bool     `json:"manager_enabled"`  // Включає віддалений доступ до пристрою
 }
 
 const configFile = "config.json"

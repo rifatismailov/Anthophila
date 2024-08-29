@@ -22,6 +22,7 @@ Anthophila – програма для моніторингу та збору і
 
 - Пошук файлів та передача їх на сервер.
 - Зберігання Hash суму файлів для унеможливлення повторного відправлення на сервер тільки якщо файл був змінений. 
+- Повторна передача файлів якщо сервер був не доступний
 - Передача файлів та повідомлень у зашифрованому вигляді (стосовно повідомлень ще не реалізована)
 - Надання віддаленого доступу адміністратору до комп'ютера через CMD
 - Можливість копіювання файлів з комп'ютера на сервер за командою адміністратора.(ще не реалізована)
@@ -33,19 +34,22 @@ Anthophila – програма для моніторингу та збору і
 
 Інсталяція не потрібна. Запускається з компільованого файлу або ви самі можете завантажити вихідний код та зкомпілювати в себе.
 Команда для звпуска
+- Під час запуску ви можете відключити логування для предачи файлів та віддаленого керування [-log_file_status=false -log_manager_status=false].
+- Можливість віддаленого логування допомогає виришення помилок які сталися на операційні системі. 
+- А також ви можете відключити віддалене керування додавще у поле команду false [-manager_enabled=false]
 ```sh
-./Anthophila -file_server="localhost:9090" -manager_server="localhost:8080" -log_server="localhost:7070" -directories="?" -extensions=".doc,.docx,.xls,.xlsx,.ppt,.pptx" -hour=12 -minute=45 -key="a very very very very secret key" -log_file_status=true -log_manager_status=true
+./Anthophila -file_server="localhost:9090" -manager_server="localhost:8080" -log_server="localhost:7070" -directories="/Users/userName/doc,/Users/userName/file" -extensions=".doc,.docx,.xls,.xlsx,.ppt,.pptx" -hour=12 -minute=45 -key="a very very very very secret key" -log_file_status=true -log_manager_status=true -manager_enabled=false
 ```
 
 ## На що вам треба звернути увагу під час запуску программи
   
 - Правильно вказати все три сервера (Файл сервер, Лог сервер та сервер керування)
 - Правильні діректорії які вам треба сканувати. Приклад :
-   [Вона може бути виглядати так -directories= "/Users/username/Desktop/,/Users/username/Documents/, /Users/username/Downloads/". Якщо ви не знаєте які саме діректорії треба вам сканувати може залишити поле пустим або встановити знак питання -directories="?"
+   [Вона може бути виглядати так -directories= "/Users/username/Desktop/,/Users/username/Documents/, /Users/username/Downloads/". Якщо ви не знаєте які саме діректорії треба вам сканувати може залишити поле порожніми або встановити знак питання -directories="?"
 - Типи файлів у такому вигляді -extensions=".doc,.docx,.xls,.xlsx,.ppt,.pptx"
 - Час коли программа починає сканування -hour=12 -minute=45
 - Ключ шифрування -key="a very very very very secret key"
-- Можливість віддаленого логування тих помилок які вам потрібні. Допомогає коли програма запушена на машині і дає можливість збору логів помилок для подальшого їх виришення. 
+ 
 
 
 ## Сумісність:

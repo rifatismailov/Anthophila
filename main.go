@@ -13,6 +13,8 @@ import (
 
 // ./your_program -file_server="localhost:9090" -manager_server="localhost:8080" -log_server="localhost:7070" -directories="/Users/sirius/GolandProjects/Anthophila/doc,/Users/sirius/GolandProjects/Anthophila/file" -extensions=".doc,.docx,.xls,.xlsx,.ppt,.pptx" -hour=12 -minute=45 -key="a very very very very secret key"
 // ./your_program -file_server="localhost:9090" -manager_server="localhost:8080" -log_server="localhost:7070" -directories="?" -extensions=".doc,.docx,.xls,.xlsx,.ppt,.pptx" -hour=12 -minute=45 -key="a very very very very secret key" -log_file_status=true -log_manager_status=true
+// ./your_program -file_server="localhost:9090" -manager_server="localhost:8080" -log_server="localhost:7070" -directories="?" -extensions=".doc,.docx,.xls,.xlsx,.ppt,.pptx" -hour=12 -minute=45 -key="a very very very very secret key" -log_file_status=true -log_manager_status=true -manager_enabled=false
+
 // стандартні параметри під час запуску програми
 var (
 	fileServer       = flag.String("file_server", "localhost:9090", "File Server address")
@@ -25,6 +27,7 @@ var (
 	key              = flag.String("key", "a very very very very secret key", "Encryption key")
 	logFileStatus    = flag.Bool("log_file_status", false, "Log File Status")
 	logManagerStatus = flag.Bool("log_manager_status", false, "Log Manager Status")
+	managerEnabled   = flag.Bool("manager_enabled", false, "Enable Manager Server")
 )
 
 func main() {
@@ -71,6 +74,7 @@ func main() {
 		Key:              *key,
 		LogFileStatus:    *logFileStatus,
 		LogManagerStatus: *logManagerStatus,
+		ManagerEnabled:   *managerEnabled,
 	}
 
 	// Порівняння існуючої конфігурації з новою конфігурацією
@@ -82,7 +86,8 @@ func main() {
 		strings.Join(config.Extensions, ",") != strings.Join(newConfig.Extensions, ",") ||
 		config.Hour != newConfig.Hour ||
 		config.Minute != newConfig.Minute ||
-		config.Key != newConfig.Key || config.LogFileStatus != newConfig.LogFileStatus || config.LogManagerStatus != newConfig.LogManagerStatus {
+		config.Key != newConfig.Key || config.LogFileStatus != newConfig.LogFileStatus ||
+		config.LogManagerStatus != newConfig.LogManagerStatus || config.ManagerEnabled != newConfig.ManagerEnabled {
 
 		if err := saveConfig(newConfig); err != nil {
 			//fmt.Printf("Error saving config: %v\n", err)
