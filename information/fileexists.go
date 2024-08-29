@@ -1,3 +1,22 @@
+/*
++----------------------------+
+|        FileExist           |
+|                            |
+| 1.  FilePathExists          |
+|    +-------------------+   |
+|    |                   |   |
+|    | Читання JSON файлу|   |
+|    | Перевірка та      |   |
+|    | видалення шляху   |   |
+|    +--------+----------+   |
+|             |              |
+|             v              |
+| 2.  Запис оновленого        |
+|     JSON файлу              |
+|                            |
++----------------------------+
+*/
+
 package information
 
 import (
@@ -6,14 +25,18 @@ import (
 	"os"
 )
 
+// FileExist представляє структуру для збереження шляхів до файлів.
 type FileExist struct {
-	FilePaths []string `json:"filePaths"`
+	FilePaths []string `json:"filePaths"` // Масив шляхів до файлів
 }
 
+// NewFileExist створює новий екземпляр FileExist.
 func NewFileExist() *FileExist {
 	return &FileExist{}
 }
 
+// FilePathExists перевіряє наявність вказаного шляху до файлу в JSON файлі.
+// Якщо шлях знайдено, він видаляється з JSON файлу і файл перезаписується.
 func (fs *FileExist) FilePathExists(filePath string, jsonFilePath string) (bool, error) {
 	// Читання JSON-файлу
 	file, err := os.Open(jsonFilePath)

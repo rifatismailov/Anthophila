@@ -13,17 +13,18 @@ import (
 	"time"
 )
 
-// TManager представляє структуру для керування терміналом
+// TManager представляє структуру для керування терміналом.
+// Він дозволяє запускати термінал, надсилати команди, отримувати вихід та керувати його роботою.
 type TManager struct {
-	cmd    *exec.Cmd
-	input  chan string
-	output chan string
-	wg     *sync.WaitGroup
-	pid    int
-	mu     sync.Mutex // Для синхронізації доступу до cmd
+	cmd    *exec.Cmd       // Вказує на команду, яка запускає термінал
+	input  chan string     // Канал для надсилання команд до термінала
+	output chan string     // Канал для отримання виходу з термінала
+	wg     *sync.WaitGroup // Синхронізація завершення потоків
+	pid    int             // ID процесу термінала
+	mu     sync.Mutex      // Для синхронізації доступу до cmd
 }
 
-// NewTerminalManager створює новий екземпляр TManager
+// NewTerminalManager створює новий екземпляр TManager та ініціалізує його залежно від операційної системи.
 func NewTerminalManager() *TManager {
 	tm := &TManager{
 		input:  make(chan string),
@@ -41,7 +42,8 @@ func NewTerminalManager() *TManager {
 	return tm
 }
 
-// Start запускає термінал та потоки для взаємодії з ним
+// Start запускає термінал та ініціалізує потоки для взаємодії з ним.
+// Повертає помилку, якщо запуск термінала не вдається.
 func (tm *TManager) Start() error {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
@@ -83,7 +85,8 @@ func (tm *TManager) Start() error {
 	return nil
 }
 
-// Stop зупиняє термінал
+// Stop зупиняє термінал та завершує потоки.
+// Якщо термінал не запущений, метод просто повернеться.
 func (tm *TManager) Stop() {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
@@ -98,17 +101,19 @@ func (tm *TManager) Stop() {
 	tm.wg.Wait()
 }
 
-// SendCommand надсилає команду до терміналу
+// SendCommand надсилає команду до терміналу через канал input.
 func (tm *TManager) SendCommand(command string) {
 	tm.input <- command
 }
 
-// GetOutput повертає канал для читання виходу терміналу
+// GetOutput повертає канал для читання виходу терміналу.
+// Цей канал використовується для отримання виходу, який генерується терміналом.
 func (tm *TManager) GetOutput() <-chan string {
 	return tm.output
 }
 
-// Restart перезапускає термінал
+// Restart зупиняє термінал і запускає його заново через одну секунду.
+// Якщо запуск термінала не вдається, помилка логуються.
 func (tm *TManager) Restart() {
 	tm.Stop() // Зупиняємо термінал
 	time.Sleep(1 * time.Second)
@@ -117,10 +122,12 @@ func (tm *TManager) Restart() {
 	}
 }
 
-// runTerminal запускає обробку вводу/виводу термінала
+// runTerminal запускає обробку вводу/виводу термінала у окремих потоках.
+// Цей метод обробляє дані з stdin, stdout та stderr.
 func (tm *TManager) runTerminal(stdin io.WriteCloser, stdout io.Reader, stderr io.Reader) {
 	defer tm.wg.Done()
 
+	// Обробка виводу з stdout
 	go func() {
 		defer close(tm.output)
 		reader := bufio.NewReader(stdout)
@@ -137,6 +144,7 @@ func (tm *TManager) runTerminal(stdin io.WriteCloser, stdout io.Reader, stderr i
 		}
 	}()
 
+	// Обробка виводу з stderr
 	go func() {
 		reader := bufio.NewReader(stderr)
 		for {
@@ -152,6 +160,7 @@ func (tm *TManager) runTerminal(stdin io.WriteCloser, stdout io.Reader, stderr i
 		}
 	}()
 
+	// Обробка введених команд
 	for command := range tm.input {
 		if strings.TrimSpace(command) == "exit" {
 			stdin.Close()
@@ -182,6 +191,7 @@ func (tm *TManager) runTerminal(stdin io.WriteCloser, stdout io.Reader, stderr i
 		}
 	}
 
+	// Очікування завершення процесу
 	if err := tm.cmd.Wait(); err != nil {
 		log.Println("Error waiting for command:", err)
 	}

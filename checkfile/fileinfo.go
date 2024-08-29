@@ -1,3 +1,24 @@
+/*
++----------------------------+
+|         FileInfo           |
+|                            |
+| 1.   CheckAndWriteHash      |
+|    +-------------------+   |
+|    |                   |   |
+|    | Обчислення хешу  |   |
+|    | та запис у JSON  |   |
+|    +--------+----------+   |
+|             |              |
+|             v              |
+| 2.   calculateHash         |
+|     +-------------------+  |
+|     |                   |  |
+|     | Обчислення хешу  |  |
+|     +-------------------+  |
+|                            |
++----------------------------+
+*/
+
 package checkfile
 
 import (
@@ -9,15 +30,20 @@ import (
 	"path/filepath"
 )
 
+// FileInfo представляє інформацію про файл, включаючи шлях, ім'я та хеш.
 type FileInfo struct {
-	Path string `json:"path"`
-	Name string `json:"name"`
-	Hash string `json:"hash"`
+	Path string `json:"path"` // Шлях до файлу
+	Name string `json:"name"` // Ім'я файлу
+	Hash string `json:"hash"` // Хеш файлу
 }
 
+// NewFileInfo створює новий екземпляр FileInfo.
 func NewFileInfo() *FileInfo {
 	return &FileInfo{}
 }
+
+// CheckAndWriteHash обчислює хеш для файлу, порівнює його з існуючими даними в JSON файлі,
+// оновлює JSON файл, якщо хеш змінився, або додає новий запис, якщо файл не знайдено.
 func (fi FileInfo) CheckAndWriteHash(filePath string, jsonFilePath string) (bool, error) {
 	// Обчислення хешу файлу
 	hash, err := calculateHash(filePath)
@@ -90,7 +116,7 @@ func (fi FileInfo) CheckAndWriteHash(filePath string, jsonFilePath string) (bool
 	return true, nil // Файл додано або оновлено
 }
 
-// calculateHash обчислює SHA-256 хеш файлу
+// calculateHash обчислює SHA-256 хеш файлу за вказаним шляхом.
 func calculateHash(filePath string) (string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -104,3 +130,20 @@ func calculateHash(filePath string) (string, error) {
 	}
 	return fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
+
+//	Опис:
+//	FileInfo структура:
+//	Path: Шлях до файлу.
+//	Name: Ім'я файлу.
+//	Hash: Хеш файлу.
+
+//	NewFileInfo:
+//	Функція для створення нового екземпляра FileInfo.
+
+//	CheckAndWriteHash:
+//	Обчислює хеш файлу.
+//	Порівнює хеш з даними в JSON файлі.
+//	Оновлює JSON файл, якщо хеш змінився, або додає новий запис, якщо файл не знайдено.
+
+//	calculateHash:
+//	Обчислює SHA-256 хеш файлу і повертає його як рядок.

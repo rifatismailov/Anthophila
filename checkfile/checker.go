@@ -9,21 +9,24 @@ import (
 	"strings"
 )
 
-// Checker - структура, що містить дані для перевірки файлів.
+// Checker - структура для перевірки файлів у зазначених директоріях.
 type Checker struct {
-	FileAddress         string
-	LogAddress          string
-	Key                 []byte
-	Directories         []string
-	SupportedExtensions []string
-	InfoJson            string
-	LogStatus           bool
+	FileAddress         string   // Адреса сервера для відправлення файлів
+	LogAddress          string   // Адреса для ведення журналу
+	Key                 []byte   // Ключ для шифрування файлів
+	Directories         []string // Список директорій для перевірки
+	SupportedExtensions []string // Список підтримуваних розширень файлів
+	InfoJson            string   // Додаткова інформація, яка буде додана до імені файлу
+	LogStatus           bool     // Вказує, чи потрібно вести журнал подій
 }
 
-// CheckFile - метод для перевірки файлів у зазначених директоріях.
+// CheckFile перевіряє файли у вказаних директоріях, обчислює їх хеш-сумми та відправляє їх на сервер,
+// якщо хеш-сумма змінилася або якщо файли не були відправлені раніше.
+//
+// Метод проходить по всіх зазначених директоріях, перевіряє типи файлів, порівнює їх хеш-сумми з
+// збереженими значеннями, і в разі змін або наявності невідправлених файлів відправляє їх на сервер.
 func (c *Checker) CheckFile() {
-
-	// Завантажуємо список помилок
+	// Завантаження списку помилок
 	errorPaths, err := logging.LoadErrorPaths()
 	if err != nil {
 		if c.LogStatus {
@@ -35,7 +38,7 @@ func (c *Checker) CheckFile() {
 	// Проходження по всіх вказаних директоріях
 	for _, dir := range c.Directories {
 		if logging.IsPathInErrorList(dir, errorPaths) {
-			//[CheckFile] Пропуск шляху з попередньою помилкою доступу"
+			// Пропускаємо директорії з попередньою помилкою доступу
 			continue
 		}
 
@@ -49,32 +52,28 @@ func (c *Checker) CheckFile() {
 
 				logging.AddErrorPath(path, err.Error(), errorPaths)
 				logging.SaveErrorPaths(errorPaths) // Зберігаємо оновлений список помилок
-
 				return nil
 			}
 
-			// Перевіряє, чи підтримується тип файлу
+			// Перевірка, чи підтримується тип файлу
 			if !info.IsDir() && isSupportedFileType(path, c.SupportedExtensions) {
 				changed, errorFileInfo := NewFileInfo().CheckAndWriteHash(path, "hashes.json")
 				if errorFileInfo != nil {
 					if c.LogStatus {
 						logging.Now().PrintLog(c.LogAddress,
-							"[CheckFile] Помилка під час перевірки підтримування тип файлу", path)
+							"[CheckFile] Помилка під час перевірки підтримування типу файлу", path)
 					}
 				} else if changed {
 					// Хеш файлу змінився
 					sendfile.NewFILESender().SenderFile(c.LogStatus, c.FileAddress, c.LogAddress, path, c.Key, c.InfoJson)
 				} else {
-					// Перевіряємо якщо файли були не відправлені
 					// Перевіряємо, чи існує посилання на файл
 					exists, err := information.NewFileExist().FilePathExists(path, "no_sent.json")
 					if err != nil {
+						// Логування помилки перевірки існування файлу
 					}
 					if exists {
 						sendfile.NewFILESender().SenderFile(c.LogStatus, c.FileAddress, c.LogAddress, path, c.Key, c.InfoJson)
-						//	log.Fatalf("Невідпрвлені файли відправлені: ")
-
-					} else {
 					}
 				}
 			}
@@ -89,17 +88,20 @@ func (c *Checker) CheckFile() {
 			}
 		}
 	}
-
 }
 
-// Функція isSupportedFileType:
-// Перевіряє, чи підтримується тип файлу. Повертає true, якщо розширення файлу є одним з підтримуваних
+// isSupportedFileType перевіряє, чи має файл одне з підтримуваних розширень.
+//
+// Аргументи:
+// - file: шлях до файлу
+// - supportedExtensions: список підтримуваних розширень файлів
+//
+// Повертає true, якщо розширення файлу є одним з підтримуваних, інакше false.
 func isSupportedFileType(file string, supportedExtensions []string) bool {
-	// Перевіряємо, чи файл має одне з підтримуваних розширень
 	for _, ext := range supportedExtensions {
 		if strings.HasSuffix(file, ext) {
-			return true // Повертаємо true, якщо файл має підтримуване розширення
+			return true
 		}
 	}
-	return false // Повертаємо false, якщо файл не має підтримуваного розширення
+	return false
 }

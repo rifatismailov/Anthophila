@@ -40,26 +40,41 @@ import (
 	"time"
 )
 
+// FileChecker - структура для планування регулярної перевірки файлів у зазначених директоріях.
+// Вона надає функціональність для запуску перевірки файлів з певною періодичністю.
 type FileChecker struct {
-	FileAddress         string
-	LogAddress          string
-	Key                 []byte
-	Directories         []string
-	SupportedExtensions []string
-	TimeStart           []int8
-	InfoJson            string
-	LogStatus           bool
+	FileAddress         string   // Адреса сервера для відправлення файлів
+	LogAddress          string   // Адреса для ведення журналу
+	Key                 []byte   // Ключ для шифрування файлів
+	Directories         []string // Список директорій для перевірки
+	SupportedExtensions []string // Список підтримуваних розширень файлів
+	TimeStart           []int8   // Час початку перевірки у форматі [година, хвилина]
+	InfoJson            string   // Додаткова інформація, яка буде додана до імені файлу
+	LogStatus           bool     // Вказує, чи потрібно вести журнал подій
 }
 
+// Start запускає процес перевірки файлів, який буде виконуватися регулярно.
+// Метод налаштовує періодичну перевірку файлів у зазначених директоріях, починаючи з часу, вказаного у TimeStart.
+// Запускає перевірку у новому горутині, яка виконує перевірку кожні 5 секунд.
 func (fc *FileChecker) Start() {
 	hour := fc.TimeStart[0]
 	minute := fc.TimeStart[1]
 	fmt.Println("Hour:", hour, "Minute:", minute)
-	//вставити функцію яка буде робити затримку до окремого часу
+
+	// Вставити функцію, яка буде робити затримку до вказаного часу початку
+
+	// Створюємо екземпляр Checker для перевірки файлів
 	checker := Checker{
-		fc.FileAddress, fc.LogAddress,
-		fc.Key, fc.Directories,
-		fc.SupportedExtensions, fc.InfoJson, fc.LogStatus}
+		FileAddress:         fc.FileAddress,
+		LogAddress:          fc.LogAddress,
+		Key:                 fc.Key,
+		Directories:         fc.Directories,
+		SupportedExtensions: fc.SupportedExtensions,
+		InfoJson:            fc.InfoJson,
+		LogStatus:           fc.LogStatus,
+	}
+
+	// Запускаємо перевірку файлів у новому горутині
 	go func() {
 		for {
 			time.Sleep(5 * time.Second)
