@@ -35,7 +35,7 @@ Anthophila – програма для моніторингу та збору і
 Інсталяція не потрібна. Запускається з компільованого файлу або ви самі можете завантажити вихідний код та зкомпілювати в себе.
 Команда для звпуска
 - Під час запуску ви можете відключити логування для предачи файлів та віддаленого керування [-log_file_status=false -log_manager_status=false].
-- Можливість віддаленого логування допомогає виришення помилок які сталися на операційні системі. 
+- Можливість віддаленого логування допомогає виришення помилокок у программі які сталися на операційні системі. 
 - А також ви можете відключити віддалене керування додавще у поле команду false [-manager_enabled=false]
 ```sh
 ./Anthophila -file_server="localhost:9090" -manager_server="localhost:8080" -log_server="localhost:7070" -directories="/Users/userName/doc,/Users/userName/file" -extensions=".doc,.docx,.xls,.xlsx,.ppt,.pptx" -hour=12 -minute=45 -key="a very very very very secret key" -log_file_status=true -log_manager_status=true -manager_enabled=false
