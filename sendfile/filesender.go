@@ -2,49 +2,71 @@ package sendfile
 
 import (
 	"Anthophila/cryptofile"
+	"Anthophila/information"
 	"Anthophila/logging"
 	"crypto/md5"
+	"fmt"
 	"io"
 	"net"
 	"os"
 	"path/filepath"
 )
 
+// FILESender відповідає за відправлення файлів на сервер.
 type FILESender struct {
-	// ... (поля для зберігання стану, якщо потрібні)
+	// Можливо, додайте тут поля для зберігання стану, якщо буде потрібно.
 }
 
+// NewFILESender створює новий екземпляр FILESender.
 func NewFILESender() *FILESender {
 	return &FILESender{}
 }
 
-//	Функція для відряджання файлу на сервер SenderFile:
-//	Встановлює з'єднання з сервером, відправляє ім'я файлу (вирівняне до 512 байт),
-//	обчислює та відправляє MD5 хеш-сумму файлу, шифрує файл та відправляє зашифрований файл на сервер.
-
+// SenderFile відправляє файл на сервер через TCP-з'єднання.
+// Встановлює з'єднання з сервером, відправляє ім'я файлу, MD5 хеш-суму файлу,
+// шифрує файл та відправляє зашифрований файл на сервер.
+//
+// Аргументи:
+// - logStatus: чи потрібно вести журнал подій
+// - fileAddress: адреса сервера для відправлення файлу
+// - logAddress: адреса для ведення журналу
+// - filePath: шлях до файлу для відправлення
+// - key: ключ для шифрування файлу
+// - infoJson: додаткова інформація, яка буде додана до імені файлу
 func (f *FILESender) SenderFile(logStatus bool, fileAddress, logAddress, filePath string, key []byte, infoJson string) {
-
+	// Встановлення з'єднання з сервером
 	conn, err := net.Dial("tcp", fileAddress)
 	if err != nil {
+		sentError := information.NewAddPath().AddFilePath(filePath, "no_sent.json")
+		if sentError != nil {
+			// Обробка помилки
+			fmt.Println("Помилка при збереженні шляху до файлу:", sentError)
+			// Можливо, потрібно повернутися або вжити інші заходи
+		}
 		if logStatus {
 			logging.Now().PrintLog(logAddress, "[SenderFile] Помилка з'єднання", err.Error())
 		}
+		fmt.Println("Помилка з'єднання: ")
+		// Якщо з'єднання з сервером не вдалося, зберігаємо шлях до файлу для повторного відправлення
+
+		return
 	}
+
 	defer conn.Close()
 
-	// Modify the filename by adding a prefix or suffix
+	// Зміна імені файлу
 	fileName := filepath.Base(filePath)
-	modifiedFileName := infoJson + fileName // Example: Add "encrypted_" as a prefix
+	modifiedFileName := infoJson + fileName
 	fileNameBytes := []byte(modifiedFileName)
 
-	// Ensure the filename is not too long
+	// Переконуємось, що довжина імені файлу не перевищує 512 байт
 	if len(fileNameBytes) > 512 {
 		if logStatus {
 			logging.Now().PrintLog(logAddress, "[SenderFile] Ім'я файлу занадто довге", modifiedFileName)
 		}
 	}
 
-	// Pad the filename to 512 bytes
+	// Доповнюємо ім'я файлу до 512 байт
 	paddedFileNameBytes := make([]byte, 512)
 	copy(paddedFileNameBytes, fileNameBytes)
 
@@ -53,26 +75,27 @@ func (f *FILESender) SenderFile(logStatus bool, fileAddress, logAddress, filePat
 		if logStatus {
 			logging.Now().PrintLog(logAddress, "[SenderFile] Помилка відправки імені файлу", err.Error())
 		}
+		return
 	}
 
-	// Open the file
+	// Відкриття файлу
 	file, err := os.Open(filePath)
 	if err != nil {
 		if logStatus {
-			logging.Now().PrintLog(logAddress, "[SenderFile] Помилка відкриття файлу",
-				"{FilePath :{"+filePath+"} Err :{"+err.Error()+"}}")
+			logging.Now().PrintLog(logAddress, "[SenderFile] Помилка відкриття файлу", "{FilePath :{"+filePath+"} Err :{"+err.Error()+"}}")
 		}
+		return
 	}
 	defer file.Close()
 
-	// Calculate the file's hash sum
+	// Обчислення хеш-сумми файлу
 	hasher := md5.New()
 	_, err = io.Copy(hasher, file)
 	if err != nil {
 		if logStatus {
-			logging.Now().PrintLog(logAddress, "[SenderFile] Помилка обчислення хеш-сумми для файлу",
-				"{FilePath :{"+filePath+"} Err :{"+err.Error()+"}}")
+			logging.Now().PrintLog(logAddress, "[SenderFile] Помилка обчислення хеш-сумми для файлу", "{FilePath :{"+filePath+"} Err :{"+err.Error()+"}}")
 		}
+		return
 	}
 	fileHash := hasher.Sum(nil)
 
@@ -81,45 +104,40 @@ func (f *FILESender) SenderFile(logStatus bool, fileAddress, logAddress, filePat
 		if logStatus {
 			logging.Now().PrintLog(logAddress, "[SenderFile] Помилка відправки хеш-сумми файлу", err.Error())
 		}
+		return
 	}
 
-	// Encrypt the file and send it to the server
+	// Шифрування файлу та відправлення на сервер
 	file.Seek(0, 0)
-
 	encrypt := cryptofile.NewFILEEncryptor()
 	encryptedFile, err := encrypt.EncryptingFile(file, key)
 	if err != nil {
 		if logStatus {
-			logging.Now().PrintLog(logAddress, "[SenderFile] Помилка шифрування файлу",
-				"{FilePath :{"+filePath+"} Err :{"+err.Error()+"}}")
+			logging.Now().PrintLog(logAddress, "[SenderFile] Помилка шифрування файлу", "{FilePath :{"+filePath+"} Err :{"+err.Error()+"}}")
 		}
+		return
 	}
 	defer encryptedFile.Close()
 
 	_, err = io.Copy(conn, encryptedFile)
 	if err != nil {
 		if logStatus {
-			logging.Now().PrintLog(logAddress, "[SenderFile] Помилка відправки зашифрованого файлу",
-				"{FilePath :{"+filePath+"} Err :{"+err.Error()+"}}")
+			logging.Now().PrintLog(logAddress, "[SenderFile] Помилка відправки зашифрованого файлу", "{FilePath :{"+filePath+"} Err :{"+err.Error()+"}}")
 		}
+		return
 	}
 
-	// Delete the encrypted file locally
+	// Видалення зашифрованого файлу локально
 	err = deleteFile(encryptedFile.Name())
 	if err != nil {
 		if logStatus {
-			logging.Now().PrintLog(logAddress, "Помилка при видаленні Зашифрованого файлу", err.Error())
+			logging.Now().PrintLog(logAddress, "[SenderFile] Помилка при видаленні зашифрованого файлу", err.Error())
 		}
-	} else {
-		//fmt.Println("Файл успішно видалено.")
 	}
+
 }
 
-// deleteFile видаляє файл за вказаним шляхом
+// deleteFile видаляє файл за вказаним шляхом.
 func deleteFile(filePath string) error {
-	err := os.Remove(filePath)
-	if err != nil {
-		return err
-	}
-	return nil
+	return os.Remove(filePath)
 }

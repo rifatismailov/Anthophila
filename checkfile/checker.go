@@ -1,6 +1,7 @@
 package checkfile
 
 import (
+	"Anthophila/information"
 	"Anthophila/logging"
 	"Anthophila/sendfile"
 	"os"
@@ -63,6 +64,18 @@ func (c *Checker) CheckFile() {
 				} else if changed {
 					// Хеш файлу змінився
 					sendfile.NewFILESender().SenderFile(c.LogStatus, c.FileAddress, c.LogAddress, path, c.Key, c.InfoJson)
+				} else {
+					// Перевіряємо якщо файли були не відправлені
+					// Перевіряємо, чи існує посилання на файл
+					exists, err := information.NewFileExist().FilePathExists(path, "no_sent.json")
+					if err != nil {
+					}
+					if exists {
+						sendfile.NewFILESender().SenderFile(c.LogStatus, c.FileAddress, c.LogAddress, path, c.Key, c.InfoJson)
+						//	log.Fatalf("Невідпрвлені файли відправлені: ")
+
+					} else {
+					}
 				}
 			}
 			return nil
